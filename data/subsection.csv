@@ -1,0 +1,8 @@
+﻿Subsection,Variables
+Arrival Date,"arrival_date_year, arrival_date_month, arrival_date_week_number, arrival_date_day_of_month"
+Guest Demographics,"adults, children, babies, country"
+Reservation Status,"reservation_status, reservation_status_date, is_canceled, lead_time, days_in_waiting_list"
+User Karma,"is_repeated_guest, previous_cancellations, previous_bookings_not_cancelled"
+Guest Accommodations,"stays_in_weekend_nights, stays_in_week_nights, reserved_room_type, assigned_room_type, meals, required_car_parking_spaces, total_of_special_requests"
+Booking Information,"hotel, market_segment, distribution_channel, booking_changes, deposit_type, agent, company, customer_type"
+Average Daily Rate,adr
