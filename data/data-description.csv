@@ -1,33 +1,33 @@
 ﻿Variable,Type,Description
-hotel,factor,Khách sạn (City Hotel or Resort Hotel)
-is_canceled,integer,Giá trị cho biết đặt chỗ có bị hủy (1) hay không (0)
-lead_time,integer,Số ngày từ khi đặt phòng đến khi khách đến khách sạn. Điều này được tính bằng cách trừ ngày đặt phòng từ ngày đến
+hotel,factor,Loại khách sạn (City Hotel or Resort Hotel)
+is_canceled,integer,Cho biết đặt chỗ có bị hủy (1) hay không (0)
+lead_time,integer,Số ngày từ khi đặt phòng đến khi khách đến khách sạn. Được tính bằng cách trừ ngày đặt phòng từ ngày đến
 arrival_date_year,integer,Năm của ngày đến
 arrival_date_month,factor,Tháng của ngày đến
-arrival_date_week_number,integer,Số tuần trong năm cho ngày đến
-arrival_date_day_of_month,integer,Ngày đến
-stays_in_weekend_nights,integer,Số đêm cuối tuần (thứ bảy hoặc chủ nhật) mà khách lưu trú hoặc đặt phòng tại khách sạn
-stays_in_week_nights,integer,Số đêm trong tuần (từ thứ Hai đến thứ Sáu) mà khách lưu trú hoặc đặt phòng tại khách sạn
+arrival_date_week_number,integer,Ngày đến thuộc tuần thứ mấy trong năm
+arrival_date_day_of_month,integer,Ngày của ngày đến
+stays_in_weekend_nights,integer,Số đêm cuối tuần (thứ bảy hoặc chủ nhật) mà khách lưu trú hoặc đặt phòng để lưu trú tại khách sạn
+stays_in_week_nights,integer,Số đêm trong tuần (từ thứ Hai đến thứ Sáu) mà khách lưu trú hoặc đặt phòng để lưu trú tại khách sạn
 adults,integer,Số người lớn
 children,integer,Số trẻ em
 babies,integer,Số trẻ sơ sinh
-meal,factor,"Loại bữa ăn đã đặt. Không xác định / SC - không có gói bữa ăn; BB - Giường & Bữa sáng; HB - Bao bữa sáng và tối (bữa sáng và một bữa ăn khác - thường là bữa tối); FB - Bao ăn 3 bữa (sáng, trưa và tối)"
+meal,factor,"Loại bữa ăn đã đặt. Không xác định/SC - không có gói bữa ăn; BB - Giường & Bữa sáng; HB - Bao ăn nửa bữa (bữa sáng và một bữa ăn khác - thường là bữa tối); FB - Bao ăn 3 bữa (sáng, trưa và tối)"
 country,factor,Quốc gia. Các danh mục được trình bày ở định dạng ISO 3155–3: 2013
-market_segment,factor,"Chỉ định phân khúc thị trường. Trong các danh mục, thuật ngữ “TA” có nghĩa là “Đại lý du lịch” và “TO” có nghĩa là “Nhà điều hành tour”"
+market_segment,factor,"Chỉ định phân khúc thị trường.  “TA"" - Đại lý du lịch (Bán lẻ các gói du lịch của TO hoặc bên thứ ba); “TO” - Nhà điều hành tour (công ty kinh doanh lữ hành, một đơn vị kinh doanh chuyên sắp xếp các dịch vụ du lịch riêng lẻ thành một sản phẩm du lịch hoàn chỉnh để bán cho khách du lịch)"
 distribution_channel,factor,Kênh phân phối đặt trước. Thuật ngữ “TA” có nghĩa là “Đại lý du lịch” và “TO” có nghĩa là “Nhà điều hành tour”
-is_repeated_guest,integer,Giá trị cho biết tên đặt phòng có phải là của một khách nhiều lần (1) hay không (0)
-previous_cancellations,integer,Cho biết người dùng đã hủy đặt chỗ bao nhiêu lần trong quá khứ
-previous_bookings_not_canceled,integer,Số lượt đặt chỗ trước đó không bị khách hàng hủy trước lượt đặt chỗ hiện tại
-reserved_room_type,factor,Mã loại phòng đã đặt trước. Mã được trình bày thay vì chỉ định vì lý do ẩn danh
-assigned_room_type,factor,Mã cho loại phòng được chỉ định cho đặt phòng. Đôi khi loại phòng được chỉ định khác với loại phòng đã đặt trước vì lý do hoạt động của khách sạn (ví dụ: đặt trước quá nhiều) hoặc do yêu cầu của khách hàng. Mã được trình bày thay vì chỉ định vì lý do ẩn danh
-booking_changes,integer,Số lượng thay đổi / sửa đổi đối với đặt phòng kể từ thời điểm đặt phòng được nhập trên PMS cho đến thời điểm nhận phòng hoặc hủy bỏ
-deposit_type,factor,Cho biết nếu khách hàng đã đặt cọc để đảm bảo đặt phòng. Biến này có thể giả định 3 loại: No deposit - không gửi trước; No Refund - trả trước toàn bộ chi phí; Refundable - trả trước một phần chi phí
-agent,factor,ID của đại lý đã đặt chỗ
-company,factor,ID của công ty / tổ chức đã thực hiện đặt phòng hoặc chịu trách nhiệm thanh toán đặt phòng.
+is_repeated_guest,integer,Cho biết đây có phải khách hàng quay lại/ khách hàng đã đặt phòng trước đây rồi (1) hay không (0) 
+previous_cancellations,integer,Số lần khách hàng đã hủy đặt chỗ trong quá khứ
+previous_bookings_not_canceled,integer,Số lần đặt chỗ trước đó không bị khách hàng hủy trước lượt đặt chỗ hiện tại
+reserved_room_type,factor,Mã loại phòng đã đặt trước. Trình bày dưới dạng mã thay vì nêu rõ vì lý do ẩn danh.
+assigned_room_type,factor,Mã cho loại phòng được chỉ định cho đặt phòng. Đôi khi loại phòng được chỉ định khác với loại phòng đã đặt trước vì lý do hoạt động của khách sạn (ví dụ: đặt trước quá nhiều) hoặc do yêu cầu của khách hàng. Trình bày dưới dạng mã thay vì nêu rõ vì lý do ẩn danh.
+booking_changes,integer,Số thay đổi/sửa đổi đối với đặt phòng kể từ thời điểm đặt phòng được nhập trên PMS cho đến thời điểm nhận phòng hoặc hủy bỏ
+deposit_type,factor,Cho biết khách hàng có đặt cọc trước hay không và đặt cọc trước với kiểu như thế nào. Biến này có thể giả định 3 loại: No deposit - không đặt cọc trước; No Refund - trả trước toàn bộ chi phí; Refundable - trả trước một phần chi phí
+agent,factor,ID của đại lý du lịch thực hiện việc đặt phòng
+company,factor,ID của công ty/tổ chức đã thực hiện đặt phòng hoặc chịu trách nhiệm thanh toán đặt phòng.
 days_in_waiting_list,integer,Số ngày đặt chỗ trong danh sách chờ trước khi nó được xác nhận cho khách hàng
-customer_type,factor,Loại đặt phòng. Có 4 loại: Contract - đặt phòng có hợp đồng; Group - đặt phòng được liên kết với một nhóm; Transient - Đặt phòng không thuộc hợp đồng hoặc nhóm và không liên quan đến đặt phòng tạm thời khác; Transient-party - đặt phòng tạm thời và có liên quan đến đặt phòng tạm thời khác
+customer_type,factor,Loại đặt phòng. Có 4 loại: Contract - đặt phòng có hợp đồng; Group - đặt phòng có liên quan đến một nhóm; Transient - Đặt phòng không thuộc hợp đồng hoặc nhóm và không liên quan đến đặt phòng tạm thời khác; Transient-party - đặt phòng tạm thời và có liên quan đến đặt phòng tạm thời khác
 adr,numeric,Giá trung bình hàng ngày được xác định bằng cách chia tổng của tất cả các giao dịch lưu trú cho tổng số đêm lưu trú
 required_car_parking_spaces,integer,Số lượng chỗ đậu xe ô tô theo yêu cầu của khách hàng
 total_of_special_requests,integer,Số lượng yêu cầu đặc biệt của khách hàng (ví dụ: 2 giường đơn hoặc tầng cao)
 reservation_status,factor,"Cho biết khách hàng có hủy đặt chỗ hay không (“Canceled”); khách đã nhận phòng và sau đó trả phòng (“Check-Out”); hoặc không bao giờ xuất hiện mà không có lời giải thích với khách sạn (""No-Show"")"
-reservation_status_date,factor,Biến này có thể được sử dụng cùng với Trạng thái đặt chỗ để biết khi nào đặt phòng bị hủy hoặc khi nào khách hàng đã trả phòng khách sạn
+reservation_status_date,factor,Biến này có thể được sử dụng cùng với Trạng thái đặt chỗ (reservation_status) để biết khi nào đặt phòng bị hủy hoặc khi nào khách hàng đã trả phòng khách sạn
