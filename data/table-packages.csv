@@ -1,6 +1,6 @@
 ﻿Packages,Version,Summary
-tidyverse,1.3.2,Tổng hợp công cụ R cho thao tác và hiển thị dữ liệu
-knitr,1.4.0,Tạo dymamic report đặc biệt là hiển thị bảng
+tidyverse,1.3.2,Các công cụ R cho thao tác và trực quan hóa dữ liệu
+knitr,1.4.0,"Tạo dymamic report, đặc biệt là hiển thị bảng"
 lubridate,1.8.0,Package xử lý ngày tháng
 ISOcodes,2022.09.29,Chứa tập dữ liệu được sử dụng để dịch mã quốc gia ISO thành tên quốc gia
 patchwork,1.1.2,Package để kết hợp nhiều ggplot2 thành một hình
