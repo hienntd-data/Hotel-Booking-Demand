@@ -4,3 +4,11 @@ knitr,1.4.0,"Tạo dymamic report, đặc biệt là hiển thị bảng"
 lubridate,1.8.0,Package xử lý ngày tháng
 ISOcodes,2022.09.29,Chứa tập dữ liệu được sử dụng để dịch mã quốc gia ISO thành tên quốc gia
 patchwork,1.1.2,Package để kết hợp nhiều ggplot2 thành một hình
+maps,3.4.1,Vẽ biểu đồ địa lý
+forecast,8.19,Dùng cho time series và linear models
+ggpubr,0.5.0,Tạo biểu đồ dựa trên ggplot2 đẹp mắt hơn
+plotly,4.10.1,Tạo biểu đồ tương tác
+glue,1.6.2,"Cung cấp các chuỗi ký tự được giải thích nhỏ, nhanh và không phụ thuộc"
+scales,1.2.1,Cung cấp công cụ mở rộng trong ggplot2
+ROCR,1.0-11,Tạo đường cong ROC
+caret,6.0-93,Dùng để phân vùng data

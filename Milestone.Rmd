@@ -1,0 +1,1218 @@
+---
+title: "Nhóm 14 - Phân tích nhu cầu đặt phòng khách sạn - Milestone"
+author: 
+- Nguyễn Thị Diệu Hiền - 20133040
+- Huỳnh Nguyễn Như Nguyên - 20133019
+output:
+  html_document:
+    css: ./lab.css
+    highlight: pygments
+    theme: cerulean
+    toc: true
+    toc_float: true
+    code_folding: hide
+date: "`r format(Sys.time(), '%d %B %Y')`"
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# INTRODUCTION
+
+## Giới thiệu
+
+Khách sạn trực tiếp tạo ra doanh thu cho các nền kinh tế địa phương khi khách du lịch chi tiền trong khách sạn, nhà hàng và địa điểm giải trí.
+<br>
+Ngành khách sạn đang phát triển, ngày càng có nhiều người chi tiền cho các hoạt động nghỉ dưỡng và giải trí.
+<br>
+Mọi người chỉ có thể vào khách sạn khi đó là một kỳ nghỉ lễ hoặc một sự kiện đặc biệt, do đó nhu cầu ở trong phòng không phân bổ đều trong năm.
+<br>
+Ngành khách sạn là một ngành rất biến động và việc đặt phòng phụ thuộc vào nhiều yếu tố như loại khách sạn, tính thời vụ, ngày trong tuần, v.v.
+<br>
+Điều này làm cho việc phân tích các mẫu có sẵn trong dữ liệu cũ trở nên quan trọng hơn để giúp các khách sạn lập kế hoạch tốt hơn.
+<br>
+Sử dụng dữ liệu cũ, các khách sạn có thể thực hiện các chiến dịch khác nhau để thúc đẩy hoạt động kinh doanh.
+<br>
+Dữ liệu bao gồm khoảng 119.390 giao dịch đặt phòng từ 2 khách sạn: một khách sạn thành phố từ Lisbon ("City Hotel") và một khách sạn nghỉ dưỡng từ Algarve ("Resort Hotel").
+<br>
+Bộ dữ liệu bao gồm các lượt đặt trước sẽ đến trong khoảng thời gian từ ngày 1 tháng 7 năm 2015 đến ngày 31 tháng 8 năm 2017, bao gồm các lượt đặt trước đã đến và các lượt đặt trước đã bị hủy.
+<br>
+Có rất nhiều điều để khám phá từ dữ liệu này.
+Nhóm sẽ đặt ra 5 câu hỏi như sau:
+
+- Các nguồn đặt phòng đến từ đâu?
+
+- Tần suất hủy bỏ đối với khách hàng và khả năng họ không đến nhận phòng là bao nhiêu?
+
+- Xu hướng về mức giá có thể tính cho khách hàng là bao nhiêu?
+
+- Khách sạn có thể kiếm được bao nhiêu doanh thu trên mỗi lần đặt phòng và bao nhiêu tiền đến từ mỗi quốc gia?
+
+- Khách hàng có quay trở lại khách sạn hay không?
+
+Đồng thời dự đoán lượt đặt phòng có bị hủy bỏ hay không.
+
+## Đề xuất phương pháp phân tích
+
+Số lượng đặt phòng theo quốc gia và kênh phân phối sẽ được trả lời các lượt đặt trước đến từ đâu.
+<br>
+Tần suất hủy phòng và không đến nhận phòng sẽ được đánh giá bằng cách *chia số lượng đặt phòng bị hủy cho tổng số lượng đặt phòng*.
+<br>
+Tỷ lệ hủy phòng sẽ được tính theo quốc gia để xác định quốc gia nào có tỷ lệ hủy phòng cao nhất.
+<br>
+Doanh thu sẽ được tính từ dữ liệu đặt phòng.
+Điều này sẽ liên quan đến việc *nhân thời gian lưu trú với tỷ lệ trung bình cho khách*.
+<br>
+Doanh thu thu được từ các đặt phòng bị hủy sẽ được lập bảng.
+<br>
+Doanh thu đặt phòng trung bình sẽ được sử dụng để so sánh các đặt phòng từ các quốc gia khác nhau.
+<br>
+Phát triển một mô hình dự đoán đặt phòng có hủy và không hủy bằng cách sử dụng hồi quy logistic.
+
+## Mục đích phân tích
+
+Việc phân tích nhằm mục đích đạt được cái nhìn sâu sắc thú vị về hành vi của khách hàng khi đặt phòng khách sạn.
+Để tối ưu hóa doanh thu mà khách sạn đạt được, ban quản lý thường sử dụng chiến lược định giá, một trong số đó là tăng giá phòng khi nhu cầu cao và khuyến mãi khi nhu cầu thấp.
+<br>
+Do đó, khả năng dự báo chính xác nhu cầu trong tương lai là rất quan trọng và trở thành một phần quan trọng trong kế hoạch định giá.
+<br>
+Nhu cầu đối với các phân khúc khách hàng khác nhau có thể khác nhau và việc dự báo trở nên khó khăn hơn vì nó có thể yêu cầu các mô hình khác nhau cho các phân khúc khác nhau.
+Những thông tin chi tiết này có thể hướng dẫn các khách sạn điều chỉnh chiến lược khách hàng của họ và chuẩn bị cho những điều chưa biết.
+
+# SET UP PACKAGES
+
+Liệt kê các package nhóm đã sử dụng cho quá trình thực hiện project
+<br>
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(lubridate)
+library(patchwork)
+library(ISOcodes)
+library(maps)
+library(forecast)
+library(tseries)
+library(ggpubr)
+library(plotly)
+library(glue)
+library(scales)
+library(caret)
+library(ROCR)
+```
+
+```{r, echo=FALSE}
+table1 <- read.csv("data/table-packages.csv")
+table1 %>% kable(format="pipe",
+                 caption="Table 1: Package Summaries")
+```
+
+# DATA DICTIONARY
+
+**Data Dictionary** mô tả chi tiết các biến có trong dataset mà nhóm đã sử dụng
+<br>
+<br>
+
+```{r, echo=FALSE}
+table3 <- read.csv("data/data-description.csv")
+table3 %>% kable(format="pipe",
+                 caption="Table 2: Data Description")
+```
+
+# DATA PREPARATION
+
+**Data Preparation** mô tả quá trình chuẩn bị và xử lý dữ liệu bao gồm nhập dữ liệu, xử lý dữ liệu bị thiếu, cấu trúc lại một số biến, sử dụng boxplot, histogram kết hợp thực tiễn xác định outlier để loại bỏ. Vì số lượng biến lớn nên nhóm sẽ gom các biến (variables) lại thành các tiểu mục (subsection) để dễ quản lý và thuận tiện cho quá trình xử lý, phân tích. Các subsection bao gồm: *Arrival Date, Guest Demographics, Reservation Status, User Karma, Guest Accommodations, Booking Information, Average Daily Rate*
+
+Trong đó:
+
+- *Arrival Date*: chứa các biến liên quan đến ngày đến nhận phòng
+
+- *Guest Demographic*: chứa các biến liên quan đến đặc điểm của khách hàng (đối tượng/ độ tuổi, quốc gia)
+
+- *Reservation Status*: chứa các biến liên quan đến trạng thái đặt và nhận phòng 
+
+- *User Karma*: chứa các biến liên quan đến lịch sử đặt phòng của khách hàng
+
+- *Guest Accommodations*: chứa các biến liên quan đến lưu trú của khách hàng (các yêu cầu đặc biệt, số đêm lưu trú,... )
+
+- *Booking Information*: chứa các biến liên quan đến việc đặt phòng (các kênh đặt phòng, loại khách sạn, loại phòng, ...)
+
+- *Average Daily Rate*
+
+Bảng 3 dưới dây mô tả các subsection mà nhóm đã chia :
+
+```{r, echo=FALSE}
+table2 <- read.csv("data/subsection.csv")
+table2 %>% kable(format="pipe",
+                 caption="Table 3: Subsection Variables")
+```
+
+## Import Data
+
+Dữ liệu ban đầu từ bài báo "Hotel Booking Demand Datasets" được viết bởi Nuno Antonio, Ana Almeida, and Luis Nunes, February 2019.[1] Nhóm đã tải xuống dữ liệu đã được làm sạch từ #TidyTuesday.[2]
+
+```{r message=FALSE, warning=FALSE}
+#load tập dữ liệu
+hotels <- read_csv("data/hotels.csv")
+```
+
+**Data Structure**
+
+Tập dữ liệu có 119390 quan sát và 32 biến. Một số biến có kiểu dữ liệu số, một số khác có kiểu dữ liệu ký tự (character), ngày tháng (date)
+
+```{r message=FALSE, warning=FALSE}
+#Xem cấu trúc của dữ liệu
+glimpse(hotels)
+```
+
+## Arrival Date
+
+`arrival_date_year`, `arrival_date_month`, `arrival_date_week_number` và `arrival_date_day_of_month` đều chỉ thời gian khách đã đến khách sạn nên sẽ được hợp thành một biến duy nhất `arrival_date`
+
+### Hợp nhất các biến Arrival Date
+
+Hợp nhất các biến trên thành một biến duy nhất `arrival_date` bằng cách dùng thư viện `lubridate`
+
+```{r}
+hotels %>%
+  #khởi tạo một biến arrival_date với ngày, tháng, năm
+  mutate(arrival_date = paste(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year,
+                              sep = "/")) %>%
+  #chuyển character về date
+  mutate(arrival_date = dmy(arrival_date)) %>%
+  
+  #loại bỏ các biến sau khi hợp nhất khỏi hotels
+  select(-c(arrival_date_year,
+            arrival_date_month,
+            arrival_date_day_of_month,
+            arrival_date_week_number)) -> hotels
+
+```
+
+
+
+## Guest Demographics
+
+Trong phần này sẽ xử lý với các biến `adults`, `children`, `babies` và `country`.
+Xóa bỏ các quan sát không có khách và các quan sát với country là `NA`
+
+```{r }
+#============================ ADULTS VARIABLE ==================================
+  #tạo biểu đồ boxplot cho adults
+  hotels %>%
+    ggplot(aes(x = adults)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Number of Adults", title = "Boxplot") -> adults_boxplot
+
+  #tạo biểu đồ histogram cho adults
+  hotels %>%
+    ggplot(aes(x = adults)) +
+    geom_histogram(fill = "#1F77B4", breaks=seq(0,40,2)) +
+    theme_classic2()+
+    labs(x = "Number of Adults", title = "Histogram") -> adults_histogram
+  
+  #kết hợp 2 biểu đồ
+  adults_boxplot + adults_histogram -> adults_boxplot_and_histogram
+
+
+
+#============================ CHILDREN VARIABLE ================================
+
+  #Có 4 `NA` cho biến `children`, có thể là do lỗi của việc nhập dữ liệu. 
+  #Các `NA` này sẽ được coi là `0`
+  hotels %>% 
+    mutate(children = case_when(is.na(children) ~ 0,
+                                TRUE ~ children)
+           ) -> hotels
+  #Boxplot
+  hotels %>% 
+    ggplot(aes(x = children)) + 
+      geom_boxplot(fill = "#FF7F0E") +
+      theme_classic2() +
+      labs(x = "Number of Children", title = "Boxplot") -> children_boxplot
+  #Histogram
+  hotels %>% 
+    ggplot(aes(x = children)) + 
+      geom_histogram(fill = "#1F77B4", breaks=seq(0,40,2)) +
+      theme_classic2() +
+      labs(x = "Number of Children", title = "Histogram") -> children_histogram
+  
+  children_boxplot + children_histogram -> children_boxplot_and_histogram
+
+#=========================== BABIES VARIABLE ===================================
+
+  #boxplot 
+  hotels %>% 
+    ggplot(aes(x = babies)) + 
+      geom_boxplot(fill = "#FF7F0E") +
+      theme_classic2() +
+      labs(x = "Number of Babies", title = "Boxplot") -> babies_boxplot
+  
+  #histogram 
+  hotels %>% 
+    ggplot(aes(x = babies)) + 
+      geom_histogram(fill = "#1F77B4", breaks=seq(0,10,0.5)) +
+      theme_classic2() +
+      labs(x = "Number of Babies", title = "Histogram") -> babies_histogram
+  
+  babies_boxplot + babies_histogram -> babies_boxplot_and_histogram
+
+#====================== COUNTRY VARIABLE =======================================
+  #Đối với biến `country` đầu tiên chúng ta chuyển giá trị `NULL` thành `NA`
+  hotels %>% 
+  mutate(country = na_if(country, "NULL")) -> hotels
+  
+  #Sau đó loại bỏ các giá trị `NA` này vì mỗi khách phải có một `country` 
+  #nhất định và chuyển `country` về dạng factor
+  hotels %>% 
+  filter(!is.na(country)) %>% 
+  mutate(country = as.factor(country)) -> hotels
+#========================== TOTAL GUEST=========================================
+  hotels %>% 
+    mutate(total_guests = adults + children + babies) -> hotels
+#===============================================================================
+
+ggarrange(adults_boxplot_and_histogram, babies_boxplot_and_histogram,
+          children_boxplot_and_histogram, nrow = 3, ncol = 1) +
+  plot_annotation("Figure 1: Adults, Babies, Children Boxplot and Histogram")
+```
+
+
+**Nhận xét:** Biểu đồ boxplot và histogram trong hình 1 trên cho thấy - Hầu hết các quan sát dao động từ 1-3 khách. <br>
+Tuy nhiên có một vài trường hợp nhiều hơn, điều này xảy ra có thể do một số lượt đặt phòng cho các đại lý du lịch hoặc công ty lữ hành thực hiện.
+Do đó,không nên xóa các biến này. <br>
+- Hầu hết khách đến khách sạn mà không mang theo trẻ em.
+Số trẻ em lớn nhất là 10 
+<br>
+- Phần lớn khách không mang theo trẻ sơ sinh đến các khách sạn này.
+Số lượng trẻ sơ sinh lớn nhất được quan sát là 10.
+<br>
+Kết quả này không được coi là outlier vì có thể có một số trường hợp đặc biệt như vậy.
+<br>
+- Có 180 quan sát mà không có khách nào được ghi lại cho một đặt phòng.
+Chúng ta sẽ loại bỏ nó đi
+
+```{r}
+hotels %>% 
+  filter(adults + children + babies >= 1) -> hotels
+```
+
+## Reservation Status
+
+Phần này mô tả sự đặt phòng của khách và sẽ làm việc với các biến `reservation_status`, `reservation_status_date`, `is_canceled, lead_time`, `days_in_waiting_list`.
+
+```{r}
+#==================== IS_CANCELLED VARIABLE ====================================
+
+  #Chuyển `is_canceled` về dạng logic
+  hotels %>% 
+    mutate(is_canceled = as.logical(is_canceled)) -> hotels
+
+#===================== LEAD_TIME VARIABLE ======================================
+
+  #Boxplot de xac dinh outlier
+  hotels %>% 
+    ggplot(aes(lead_time)) +
+      geom_boxplot(fill = "#FF7F0E") +
+      theme_classic2() +
+      labs(x = "Lead Time (days)",
+           title = "Lead Time Boxplot") -> lead_time_boxplot
+
+#===================== DAY_IN_WAITING_LIST VARIABLE ============================
+hotels %>% 
+  ggplot(aes(days_in_waiting_list)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Days in Waiting List (days)",
+         title = "Days in Waiting List Boxplot") -> days_in_waiting_list_boxplot
+#===================== RESERVATION_STATUS VARIABLE =============================
+
+  #Chuyển về dạng factor 
+  hotels %>% 
+    mutate(reservation_status = as.factor(reservation_status)) -> hotels
+
+#===============================================================================
+
+ggarrange(lead_time_boxplot, days_in_waiting_list_boxplot) +
+  plot_annotation("Figure 2: Lead Time and Days in Waiting List Boxplot")
+
+```
+
+**Nhận xét:** Dựa vào hình 2 - Chúng ta sẽ loại bỏ các quan sát có `lead_time` > 625 khỏi tạp dữ liệu.
+
+```{r}
+hotels %>% 
+  filter(lead_time <= 625) -> hotels
+```
+
+-   Các `days_in_waiting_list` \> 200 là outlier. Ta sẽ tiến hành loại bỏ
+
+```{r}
+hotels %>% 
+  filter(days_in_waiting_list <= 200) -> hotels
+```
+
+## User Karma
+
+User Karma chứa các biến số phản ánh hành vi của người dùng đối với khách sạn.
+Phần này sẽ làm việc với các biến `is_repeated_guest`, `previous_cancellations`, và `previous_bookings_not_cancelled`.
+
+```{r}
+#==================== IS_REPEATED_GUEST VARIABLE ===============================
+
+#Chuyển về dạng logical
+hotels %>% 
+  mutate(is_repeated_guest = as.logical(is_repeated_guest)) -> hotels
+
+#==================== PREVIOUS_CANCELLATIONS VARIABLE ===========================
+hotels %>% 
+  ggplot(aes(previous_cancellations)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Previous Cancellations",
+         title = "Previous Cancellations") -> previous_cancellations_boxplot
+
+#=================PREVIOUS_BOOKINGS_NOT_CANCELLED VARIABLE =====================
+hotels %>% 
+  ggplot(aes(previous_bookings_not_canceled)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Previous Bookings not Cancelled",
+         title = "Previous Bookings not Cancelled") -> previous_bookings_not_cancelled_boxplot
+
+#===============================================================================
+ggarrange(previous_cancellations_boxplot, 
+          previous_bookings_not_cancelled_boxplot) +
+  plot_annotation("Figure 3: Previous Cancellations and Previous Bookings not Cancelled Boxplot ")
+
+```
+
+**Nhận xét:** Dựa theo hình 3 - `previous_cancellations` \> 10 là outlier nhưng sẽ không loại bỏ để tránh phạt các đại lý du lịch và các công ty đặt phòng sẽ phải hủy thay cho khách - Không chỉ rõ một ngưỡng rõ ràng cho các trường hợp outlier của `previous_bookings_not_cancelled`
+
+## Guest Accommodations
+
+Phần này bao gồm các biến mô tả chỗ ở mà mỗi đơn đặt phòng nhận được.
+Cụ thẻ là `stays_in_weekend_nights`, `stays_in_week_nights`, `reserved_room_type`, `assigned_room_type`, `meals`, `required_car_parking_spaces`, và `total_of_special_requests`
+
+```{r}
+#===================== STAYS_IN_WEEKEND_NIGHTS VARIABLE ========================
+hotels %>% 
+  ggplot(aes(stays_in_weekend_nights)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Stays in Weekend Nights",
+         title = "Stays in Weekend Nights") -> stays_in_weekend_nights_boxplot
+#========================== STAY_IN_WEEK_NIGHTS ================================
+
+hotels %>% 
+  ggplot(aes(stays_in_week_nights)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Stays in Week Nights",
+         title = "Figure 9: Stays in Week Nights") -> stays_in_week_nights_boxplot
+
+#=============================STAY_NIGHTS VARIABLE =============================
+
+  hotels %>%
+  mutate(stays_nights = stays_in_weekend_nights + stays_in_week_nights) -> hotels
+
+#============== `reserved_room_type, assigned_room_type` variables==============
+
+#Đối với các biến này chỉ cần chuyển về dạng factor
+hotels %>% 
+  mutate(reserved_room_type = as.factor(reserved_room_type)) -> hotels
+
+#=========================== `meals` variable ==================================
+
+#Đối với biến `meals`, chúng ta sẽ chuyển các ký tự viết tắt về dạng 
+#đầy đủ sau đó chuyển về dạng factor
+hotels %>% 
+  mutate(meal = case_when(meal == "Undefined" ~ "No Meal Plan",
+                          meal == "SC" ~ "No Meal Plan",
+                          meal == "BB" ~ "Bed and Breakfast",
+                          meal == "HB" ~ "Half Board",
+                          meal == "FB" ~ "Full Board")
+         ) %>% 
+  mutate(meal = as.factor(meal)) -> hotels
+
+#===============================================================================
+
+ggarrange(stays_in_weekend_nights_boxplot, stays_in_week_nights_boxplot) +
+  plot_annotation(" Figure 4: Stays in Weekend Nights and Stays in Week Nights Boxplot")
+
+```
+
+**Nhận xét:** Dựa theo hình 4 `stays_in_weekend_nights` và `stays_in_weeks_nights` \> 5 là outlier nhưng không bị loại bỏ vì có những trường hợp kéo dài thời gian lưu trú
+
+## Booking Information
+
+Phần này sẽ làm việc với các biến mô tả các thực thể tham gia vào việc đặt phòng.
+`hotel, market_segment`, `distribution_channel`, `booking_changes`, `deposit_type`, `agent`, `company`, và `customer_type`
+
+```{r}
+#======================== `hotel` variable =====================================
+    hotels %>% 
+      mutate(hotel = as.factor(hotel)) -> hotels
+
+#========================= `market_segment` variable ===========================
+
+  #Loại bỏ các giá trị "Undefined" và chuyển biến này về dạng factor
+  hotels %>% 
+    filter(market_segment != "Undefined") %>% 
+    mutate(market_segment = as.factor(market_segment)) -> hotels
+
+#======================== `distribution_channel` variable ======================
+
+  #Tương tự với `market_segment`, ta cũng loại bỏ "Undefined" và
+  #chuyển `distribution_channel` về dạng factor
+  hotels %>% 
+  filter(distribution_channel != "Undefined") %>% 
+  mutate(distribution_channel = as.factor(distribution_channel)) -> hotels
+
+#========================= `agent`, `company` variables ========================
+  #Chuyển `NULL` về `NA` sau đó chuyển về kiểu numeric
+  hotels %>% 
+  mutate(agent = na_if(agent, "NULL")) %>% 
+  mutate(agent = as.numeric(agent)) -> hotels
+
+  hotels %>% 
+  mutate(company = na_if(company, "NULL")) %>% 
+  mutate(company = as.numeric(company)) -> hotels
+
+#========================= `customer_type` variable ============================
+  #Chuyển biến này về dạng factor 
+  hotels %>%
+    mutate(customer_type = as.factor(customer_type)) -> hotels
+```
+
+## Average Daily Rate
+
+Doanh thu trung bình hàng ngày được tính bằng cách chia tổng số giao dịch liên quan đến đặt phòng cho tổng số đêm
+
+```{r}
+hotels %>% 
+  select(adr) %>% 
+  summary
+```
+
+-- Ta sẽ loại bỏ giá trị âm
+
+```{r}
+hotels %>% 
+  filter(adr >= 0) -> hotels
+```
+
+## Data after Preparation
+
+```{r message=FALSE, warning=FALSE}
+glimpse(hotels)
+```
+
+
+# EXPLORATORY DATA ANALYSIS
+
+## Analysis of Bookings
+
+### Bookings by Country
+
+Bản đồ thế giới là cách tốt nhất để hình dung các quốc gia xuất xứ của khách đặt phòng.
+Để tạo bản đồ thế giới, tên quốc gia được ánh xạ tới mã `country` được liên kết với mỗi lượt đặt phòng.
+Tên `country` đa số được giữ nguyên, tuy nhiên, trong một số trường hợp, tên quốc gia trong bản đồ thế giới của `map_data` không khớp với bộ dữ liệu `ISOCodes`, do vậy, ta sẽ cần định nghĩa lại cho một số quốc gia.
+Ngoài ra, đặt trước từ các quốc gia nằm dưới mức độ chi tiết của dữ liệu bản đồ thế giới được phân bổ cho quốc gia kiểm soát hoặc nước láng giềng gần nhất.
+Ví dụ: đặt chỗ từ Hong Kong được phân bổ cho China.
+
+```{r}
+# Load the world map data
+world_map = map_data(map = "world")
+
+hotels %>% 
+  # Thêm full name cho mỗi quốc gia
+  left_join(y = ISO_3166_1, by = c("country" = "Alpha_3")) %>% 
+  # Sửa lại tên để khớp với các vùng trong world map 
+  mutate(Name = case_when(Name == "French Southern Territories" ~ "French Southern and Antarctic Lands",
+                          Name == "Bolivia, Plurinational State of" ~ "Bolivia",
+                          Name == "Côte d'Ivoire" ~ "Ivory Coast",
+                          Name == "CN" ~ "China",
+                          Name == "Cabo Verde" ~ "Cape Verde",
+                          Name == "Czechia" ~ "Czech Republic",
+                          Name == "United Kingdom" ~ "UK",
+                          # Không có Gibraltar nên sẽ nhập vào Spain
+                          Name == "Gibraltar" ~ "Spain",
+                          # Hong Kong sẽ được add vào China
+                          Name == "Hong Kong" ~ "China",
+                          Name == "Iran, Islamic Republic of" ~ "Iran",
+                          Name == "Saint Kitts and Nevis" ~ "Saint Kitts",
+                          Name == "Korea, Republic of" ~ "South Korea",
+                          Name == "Lao People's Democratic Republic" ~ "Laos",
+                          # Macao sẽ được add vào China
+                          Name == "Macao" ~ "China",
+                          Name == "Russian Federation" ~ "Russia",
+                          Name == "Syrian Arab Republic" ~ "Syria",
+                          Name == "Taiwan, Province of China" ~ "Taiwan",
+                          country == "TMP" ~ "Timor-Leste",
+                          Name == "Tanzania, United Republic of" ~ "Tanzania",
+                          Name == "United States Minor Outlying Islands" ~ "USA",
+                          Name == "United States" ~ "USA",
+                          Name == "Venezuela, Bolivarian Republic of" ~ "Venezuela",
+                          Name == "Virgin Islands, British" ~ "Virgin Islands",
+                          Name == "Viet Nam" ~ "Vietnam",
+                          country == "CN" ~ "China",
+                          TRUE ~ Name)
+         ) %>% 
+  rename(country_name = Name, country_abbr = country) %>% 
+  # Bỏ các biến thừa
+  select(-Alpha_2, -Numeric, -Official_name, -Common_name) -> hotels
+
+# Tạo boxplot
+hotels %>% 
+  # Dếm số lượng đặt phòng theo quốc gia 
+  count(country_name) %>% 
+  # Tạo world m
+  ggplot() +
+    # Thêm một layer để hiển thị tất cả các quốc gia ngay cả các quốc gia không có dữ liệu 
+    geom_map(data = world_map,
+             map = world_map,
+             aes(map_id = region),
+             fill = "white",
+             color = "black"
+             ) +
+    # Tô màu map dựa trên số lượng đặt phòng 
+    geom_map(aes(map_id = country_name, fill = n), map = world_map) +
+      expand_limits(x = world_map$long, y = world_map$lat) +
+      scale_fill_continuous(name = "", type = "viridis") +
+      labs(title = "Figure 5: World Map of Bookings",
+           x = "Longitude (°)",
+           y = "Lattitude (°)") 
+
+```
+
+**Nhận xét:** Hình 5 cho thấy tỷ lệ đặt phòng lớn nhất đến từ Bồ Đào Nha và Châu Âu.
+Những khách sạn Bồ Đào Nha này đã nhận được đặt phòng từ mọi châu lục.
+Tuy nhiên, Nam Cực được bao gồm do nó được bao gồm trong Lãnh thổ phía Nam của Pháp chứ không phải khách đặt phòng từ Nam Cực.
+
+### Bookings by Hotel Type
+
+Bây giờ chúng ta sẽ xét đến số lượng đặt phòng liên quan đến mỗi khách sạn.
+Hình 6 bên dưới so sánh số lượng đặt phòng cho City Hotel và Resort Hotel từ năm 2015 đến năm 2017.
+Sau đó, Hình 7 và hình 8 so sánh số lượng đặt phòng theo cả năm và tháng đến.
+
+
+```{r}
+hotels %>% 
+  mutate(arrival_year = year(arrival_date)) %>% 
+  group_by(arrival_year) %>%
+  ggplot() +
+    geom_bar(aes(x = hotel, fill = hotel)) + 
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E"))+
+    theme_classic2() +
+    facet_wrap(~ arrival_year, nrow = 1) +
+    labs(x = "",
+         y = "Number of Bookings",
+         fill = "Hotel",
+         title = "Figure 6: Hotel Bookings by Year") -> hotel_bookings_by_year
+ggplotly(hotel_bookings_by_year)
+  
+```
+
+```{r}
+hotels %>% 
+  mutate(Month = month(arrival_date, label = TRUE, abbr = TRUE), Hotel = hotel) %>% 
+  ggplot() +
+    geom_bar(aes(x = Month, fill = Hotel),
+             position = "dodge") + 
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E"))+
+    theme_classic() +
+    facet_wrap(~ year(arrival_date), nrow = 3) +
+    labs(x = "",
+         y = "Number of Bookings",
+         fill = "Hotel",
+         title = "Figure 7: Hotel Bookings by Month") -> hotel_bookings_by_month
+ggplotly(hotel_bookings_by_month)
+```
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+hotels %>%
+  mutate(Month = month(arrival_date, label = TRUE), Year = year(arrival_date) ) %>%
+  select(Month, Year) %>%
+  mutate(count = 1) %>%
+  group_by(Year,Month) %>%
+  summarise(count = sum(count)) -> hotel_bookings_per_year
+colnames(hotel_bookings_per_year) <- c("Year","Month", "Total")
+hotel_bookings_per_year <- hotel_bookings_per_year %>% 
+  mutate(label=glue("Year: {Year}
+                    Month: {Month}
+                    Number of Bookings: {comma(Total)}"))  
+bookings_plot <- ggplot(data = hotel_bookings_per_year, aes( y=Total,
+                              x = Year, text = label)) +
+  geom_col(aes(fill = Month)) +
+  labs(title = "Figure 8: Number of Booking Per Year",
+       x = "Total Bookings",
+       y = "Year",
+       fill = "Month") +
+  theme_minimal()
+ggplotly(bookings_plot, tooltip = "text")
+```
+
+
+**Nhận xét:** Những con số này cho thấy City Hotel có nhiều đặt phòng hơn khách sạn Resort hàng năm.
+Năm 2016 chứng kiến số lượng đặt phòng tối đa cho cả hai khách sạn.
+Tuy nhiên, năm 2016 đã có nhiều lượt đặt trước hơn vì năm 2015 và 2017 chúng ta không có dữ liệu cho cả năm mà chỉ có các tháng cụ thể.
+
+### Bookings by Distributiion Channel
+
+Xem xét số lượng đặt phòng theo kênh phân phối, biết được kênh phân phối nào hiệu quả nhất, khách sạn sẽ tập trung vào kênh đó để thúc đẩy đặt phòng
+
+```{r}
+hotels %>% 
+  ggplot(aes(distribution_channel, fill = hotel)) +
+    geom_bar(position = 'dodge') +
+    scale_y_continuous(name = "Number of Bookings",labels = scales::comma) +
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E"))+
+    theme_classic2() +
+    xlab("Distribution Channel") +
+    ggtitle("Figure 9: Bookings by Distribution Channel") +
+    labs(fill = 'Hotel') -> bookings_by_distribution_channel
+    
+ggplotly(bookings_by_distribution_channel)
+```
+
+**Nhận xét:** Theo Hình 9, các đại lý du lịch và công ty lữ hành là những kênh lớn nhất về lượng đặt phòng cho cả hai khách sạn.
+Điều này là hợp lý, vì các thực thể này có một lượng khách du lịch liên tục đến khách sạn.
+City Hotel có nhiều đặt phòng trực tiếp hơn Resort Hotel.
+
+## Analysis of Cancellations
+
+Đầu tiên, chúng ta so sánh số lượng đặt phòng bị hủy và không bị hủy.
+Điều này bao gồm so sánh giữa các khách sạn và năm.
+Sau đó, chúng ta so sánh số lượng đặt phòng bị hủy giữa các kênh phân phối.
+Cuối cùng, chúng tôi so sánh tỷ lệ đặt phòng bị hủy từ mỗi quốc gia.
+
+### Bookings vs Cancellations
+
+Hình 10 so sánh tổng số lượt đặt trước với số lượt hủy trên toàn bộ tập dữ liệu.
+Những con số này được chia nhỏ theo năm trong Hình 11.
+
+```{r}
+hotels %>% 
+  ggplot() +
+    geom_bar(aes(x = is_canceled, fill = hotel),
+             position = "dodge") +
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E"))+
+    theme_minimal() +
+    labs(x = "Cancelled",
+         y = "Number of Bookings",
+         fill = "Hotel",
+         title = "Figure 10: Total Booking Cancellations by Hotel") -> bookings_cancellations_by_hotel
+ggplotly(bookings_cancellations_by_hotel)
+```
+
+```{r}
+hotels %>% 
+  mutate(arrival_year = year(arrival_date)) %>% 
+  ggplot() +
+    geom_bar(aes(x = is_canceled, fill = hotel),
+             position = "dodge") +
+    facet_wrap(~ arrival_year, nrow = 1) +
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E"))+
+    theme_classic2() +
+    labs(x = "Cancelled",
+         y = "Number of Bookings",
+         fill = "Hotel",
+         title = "Figure 11: Booking Cancellations by Hotel and Year") -> bookings_cancellations_by_hotel_year
+ggplotly(bookings_cancellations_by_hotel_year)
+```
+
+**Nhận xét:** Hình 10 và 11 đều chỉ ra rằng số lượng đặt phòng lớn hơn số lượng hủy bỏ của cả hai khách sạn.
+Do dữ liệu không đầy đủ trong năm 2015 và 2017, năm 2016 có nhiều đặt phòng và hủy hơn so với cả hai năm này.
+City Hotel có nhiều lượt hủy hơn, nhưng cũng có nhiều đặt phòng hơn.
+Để giảm thiểu những vấn đề này, Bảng 19 dưới đây cho thấy tỷ lệ đặt phòng bị hủy và không bị hủy theo năm.
+
+```{r, message=FALSE, warning=FALSE}
+hotels %>% 
+  
+  mutate(arrival_year = year(arrival_date)) %>% 
+  group_by(hotel, arrival_year) %>% 
+  count(is_canceled) %>% 
+  
+  group_by(hotel, arrival_year) %>% 
+  summarise(is_canceled = is_canceled,
+            percentages = round(100 * n / sum(n), 2)
+            ) %>%
+  
+  pivot_wider(names_from = arrival_year, values_from = percentages) %>% 
+  kable(format = "pipe",
+        col.names = c("Hotel",
+                      "Cancellation Status",
+                      "2015 (%)",
+                      "2016 (%)",
+                      "2017 (%)"),
+        caption = "Table 4: Hotel Cancellation and Year Contingency Table")
+```
+
+**Nhận xét:** 37,13% lượng đặt phòng bị hủy ở cả hai loại khách sạn.
+Bảng 4 cho thấy tỷ lệ hủy đặt phòng đối với City Hotel cao hơn so với Resort.
+Có thể giải thích cho điều này là số lượng hủy phòng nhiều hơn của City Hotel là do khách sạn này có nhiều đặt phòng của công ty hơn so với Resort City.
+Nghiên cứu sâu hơn nên được thực hiện để xác định nguyên nhân của việc hủy thêm và khắc phục những vấn đề đó.
+
+**Analysis of No-Shows vs. Formal Cancellations**
+
+Phần này sẽ so sánh tỷ lệ khách hủy bỏ do không đến nhận phòng ("No-show") với tỷ lệ khách hủy bỏ chính đáng ("Cancelled").
+Đây là thông tin hữu ích vì nó cho biết khả năng khách sạn hủy đặt phòng là bao nhiêu
+
+```{r}
+hotels %>% 
+  filter(is_canceled == TRUE) %>% 
+  group_by(reservation_status) %>% 
+  count(is_canceled) %>% 
+
+  ungroup() %>% 
+  mutate(percentage = round(100 * n / sum(n), 2)) %>% 
+  
+  select(-is_canceled) %>% 
+  kable(format = "pipe",
+        col.names = c("Reservation Status",
+                      "Number of Bookings",
+                      "Percentage of Cancellations"),
+        caption = "Table 5: Cancellation Contingency Table")
+```
+
+**Nhận xét:** Trong số 44.142 lượt hủy, 42.940 (\~97%) là hủy chính đáng và 1202 lượt còn lại là không đến nhận phòng.
+Điều này có nghĩa là khách có khả năng thông báo trước cho khách sạn của họ trước khi hủy.
+Thông báo trước làm cho nhiều khả năng đăng ký có thể được chỉ định lại.
+Bảng 6 và Hình 12 so sánh các kết quả này giữa City Hotel và Resort Hotel.
+
+```{r}
+hotels %>% 
+  filter(is_canceled == TRUE) %>% 
+  mutate(arrival_year = year(arrival_date)) %>% 
+  ggplot(aes(x = reservation_status, fill = hotel)) + 
+    geom_bar(position = "dodge") +
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E"))+
+    facet_grid(cols = vars(arrival_year)) +
+    theme_classic2() +
+    labs(x = "Cause",
+         y = "Number of Bookings",
+         fill = "Hotel",
+         title = "Figure 12: Cancellations by Hotel, Year, and Cause") -> cancellations_by_hotel_cause
+ggplotly(cancellations_by_hotel_cause)
+```
+
+```{r}
+hotels %>% 
+  filter(is_canceled == TRUE) %>% 
+  
+  group_by(hotel, reservation_status) %>% 
+  count(is_canceled) %>% 
+  
+  ungroup() %>% 
+  mutate(percentage = round(100 * n / sum(n), 2)) %>% 
+  
+  select(-is_canceled) %>% 
+  kable(format = "pipe",
+        col.names = c("Hotel",
+                      "Reservation Status",
+                      "Number of Bookings",
+                      "Percentage of Cancellations"),
+        caption = "Table 6: Cancellations by Hotel and Cause")
+```
+
+**Nhận xét:** Trong tổng số lượt hủy, khoảng 72,3% là đối với City Hotel và 24,5% đối với Khách sạn Resort.
+Có khoảng 2% không đến nhận phòng đối với các City Hotelvà dưới 1% đối với các khách sạn Resort.
+Một lần nữa, số lượng hủy bỏ nhiều hơn đã được quan sát thấy trong năm 2016 do nửa năm đại diện cho năm 2015 và 2017.
+
+### Cancellations by Distribution Channel
+
+Trong phần này, việc hủy đặt phòng được đánh giá theo kênh phân phối.
+Số lần hủy theo kênh phân phối được thống kê theo khách sạn về tổng số lần hủy (Bảng 7) và tỷ lệ phần trăm số lần hủy của từng khách sạn (Bảng 8).
+Bảng 9 cho thấy tỷ lệ hủy phòng do từng kênh phân phối khi xem xét cả hai khách sạn.
+
+```{r, message=FALSE}
+
+hotels %>% 
+  group_by(hotel, distribution_channel) %>% 
+  summarise(total_cancellations = sum(is_canceled, na.rm = TRUE)) %>% 
+  pivot_wider(names_from = distribution_channel,
+              values_from = total_cancellations) %>% 
+  kable(format = "pipe",
+        caption = "Table 7: Cancellations by Hotel and Distribution Channel")
+
+```
+
+```{r}
+hotels %>% 
+  filter(is_canceled == TRUE) %>% 
+  group_by(hotel, distribution_channel) %>% 
+  count(is_canceled) %>% 
+  # Tính phần trăm lượt hủy theo kênh phân phối
+  group_by(hotel) %>% 
+  mutate(percentage = round(100 * n / sum(n), 2)) %>% 
+  # Xóa bỏ biến không cần thiết
+  select(-c(is_canceled, n)) %>% 
+  
+  pivot_wider(names_from = distribution_channel, values_from = percentage) %>% 
+  kable(format = "pipe",
+        caption = "Table 8: Percentage of Hotel Cancellations by Distribution Channel")
+```
+
+```{r}
+hotels %>% 
+  filter(is_canceled == TRUE) %>% 
+  group_by(distribution_channel) %>% 
+  count(is_canceled) %>% 
+  
+  ungroup() %>% 
+  mutate(percentage = round(100 * n / sum(n), 2)) %>% 
+  
+  select(-is_canceled) %>% 
+  kable(format = "pipe",
+        col.names = c("Distribution Channel",
+                      "Cancellations",
+                      "Percentage of Cancellations"),
+        caption = "Table 9: Percentage of Cancellations by Distribution Channel")
+```
+
+**Nhận xét:** Từ Bảng 8, chúng ta có thể thấy rằng hơn 80% số lượt hủy bỏ phòng đến từ kênh phân phối của đại lý du lịch và công ty lữ hành.
+Direct là nguồn hủy bỏ phổ biến thứ hai.
+Điều thú vị là khách sạn Resort có nhiều lượt hủy bỏ từ các kênh phân phối Doanh nghiệp và Direct hơn nhiều so với khách sạn City, nhưng tỷ lệ hủy bỏ từ các đại lý du lịch và công ty lữ hành thấp hơn.
+Theo Bảng 9, hơn 90% số lần hủy phòng đến từ các đại lý du lịch và công ty lữ hành.
+
+Hình 13 cho biết tỷ lệ đặt phòng bị hủy đối với từng kênh phân phối, theo khách sạn.
+
+```{r message=FALSE, warning=FALSE}
+hotels %>%
+  
+  group_by(hotel, distribution_channel) %>% 
+  summarise(n_canceled = sum(is_canceled),
+            n_total = n(), percentage = 100 * n_canceled / n_total) %>% 
+  
+  ggplot() +
+    geom_col(aes(x = distribution_channel,
+                 y = percentage,
+                 fill = hotel),
+             position = "dodge") +
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E"))+
+    theme_minimal() +
+    labs(x = "Distribution Channel",
+         y = "Percentage of Bookings Cancelled",
+         title = "Figure 13: Percentage of Bookings Cancelled by Distribution Channel",
+         fill = "Hotel") -> percentage_bookings_cancelled_distribution
+ggplotly(percentage_bookings_cancelled_distribution)
+```
+
+**Nhận xét:** Đối với cả 2 khách sạn, đại lý du lịch và công ty lữ hành có tỷ lệ hủy đặt phòng cao nhất.
+Trong khi các đại lý du lịch và công ty lữ hành chiếm hơn 90% số lần hủy, họ chỉ có tỷ lệ hủy dưới 50% đối với cả 2 khách sạn.
+Điều này cho thấy rằng các đại lý du lịch và công ty lữ hành chiếm tỷ lệ cao trong số các trường hợp hủy do có một lượng lớn đặt phòng bị hủy.
+
+### Cancellations by Country
+
+Phần này sẽ tìm quốc gia có tỷ lệ hủy bỏ đặt phòng cao nhất.
+Điều này được đánh giá bằng cách tìm tỷ lệ đặt phòng từ mỗi quốc gia dẫn đến hủy bỏ.
+Sử dụng dữ liệu từ mọi khoảng thời gian và cả 2 khách sạn
+
+```{r}
+hotels %>% 
+  group_by(country_name) %>% 
+  
+  summarise(n_cancelled = sum(is_canceled),
+            n_total = n(),
+            percentage_cancellations = round(100 * n_cancelled / n_total,
+                                             2)
+            ) %>% 
+  slice_max(n_cancelled, n = 10) %>% 
+  
+  select(country_name,
+         n_cancelled,
+         n_total,
+         percentage_cancellations) %>% 
+  kable(format = "pipe",
+        col.names = c("Country",
+                      "Cancelled Bookings",
+                      "Total of Bookings",
+                      "Percentage of Cancellations"),
+        caption = "Table 7: Cancellations by Country")
+```
+
+**Nhận xét:** Bảng 7 cho thấy danh sách 10 quốc gia hàng đầu có số lần hủy đặt phòng cao nhất.
+Tỷ lệ hủy không được sử dụng để xếp hạng vì tất cả các quốc gia trong danh sách đó đều có tỷ lệ hủy là 100%.
+Đây là một vấn đề vì tất cả các quốc gia được liệt kê đều có một số lượng nhỏ các trường hợp hủy, nhưng tất cả các đặt phòng của họ đều bị hủy.
+Hiển thị tỷ lệ hủy cho các quốc gia có số lượng hủy lớn nhất được coi là nhiều thông tin hơn.
+Hình 14 thể hiện tỷ lệ hủy theo tỷ lệ phần trăm cho mỗi quốc gia.
+
+```{r}
+hotels %>%
+  group_by(country_name) %>%
+  
+  summarise(n_cancelled = sum(is_canceled),
+            n_total = n(),
+            percentage_cancellations = 100 * n_cancelled / n_total) %>% 
+  
+  ggplot() +
+    
+    geom_map(data = world_map,
+             map = world_map,
+             aes(map_id = region),
+             fill = "white",
+             color = "black"
+             ) +
+    
+    geom_map(aes(map_id = country_name,
+                 fill = percentage_cancellations),
+             map = world_map) +
+      expand_limits(x = world_map$long, y = world_map$lat) +
+      scale_fill_continuous(name = "", type = "viridis") +
+      labs(title = "Figure 14: Percentage of Bookings Cancelled World Map",
+           x = "Longitude (°)",
+           y = "Lattitude (°)"
+           )
+```
+
+**Nhận xét:** Nam Cực có dữ liệu do Lãnh thổ phía Nam của Pháp bao gồm cả Nam Cực.
+Bồ Đào Nha là quốc gia có tỷ lệ hủy bỏ cao nhất trong danh sách top 10, với tỷ lệ hủy bỏ là 56,6%.
+Điều thú vị là quốc gia sở tại của khách sạn sẽ có số lượng hủy đặt phòng lớn hơn so với các quốc gia còn lại.
+Điều này có thể cho thấy rằng khách hàng Bồ Đào Nha có nhiều khả năng đặt phòng tại các khách sạn địa phương hơn khi kế hoạch của họ không chắc chắn.
+Và sau đó sẵn sàng hủy bỏ hơn khi kế hoạch của họ thay đổi vì họ không phải sắp xếp chuyến du lịch quốc tế để đến khách sạn của mình.
+
+Tỷ lệ hủy bỏ dường như cao hơn bên ngoài châu Âu.
+Các quốc gia ở Nam bán cầu cũng có nhiều khả năng hủy bỏ.
+Điều này có thể là do khoảng cách đến các quốc gia này.
+Bất kỳ sự gián đoạn nào đối với việc sắp xếp việc đi lại cũng sẽ trở nên khó khăn hơn đối với những khách sống bên ngoài Khu vực Shengen.
+
+## Analysis of Repeated Guests
+
+Dùng biểu đồ time series để đánh giá tỷ lệ đặt phòng của khách cũ .Tỷ lệ đặt phòng được sử dụng sao cho chuỗi thời gian không bị ảnh hưởng bởi một phần dữ liệu trong năm 2015 và 2017.
+Hình 15 cho thấy tỷ lệ đặt phòng do khách cũ thực hiện có tính đến cả hai khách sạn.
+
+```{r}
+hotels %>% 
+  # số lượng đặt phòng bởi khách cũ 
+  group_by(arrival_date) %>%
+  count(is_repeated_guest) %>% 
+  # Tính phần trăm booking by repeated và new guest
+  mutate(percentage = 100 * n / sum(n)) %>% 
+  filter(is_repeated_guest == TRUE) %>% 
+  ggplot() +
+    geom_line(aes(x = arrival_date,
+                  y = percentage), color = "#FF7F0E"
+              ) +
+  theme_minimal() +
+    labs(x = "Arrival Date",
+         y = "Percentage of Repeat Guests",
+         title = "Figure 15: Repeat Guests Time-Series") -> repeat_guest_time_series
+ggplotly(repeat_guest_time_series)
+```
+
+**Nhận xét:** Hơn một nửa số lượt đặt phòng được thực hiện bởi khách mới.Có vẻ như tỷ lệ khách lặp lại tăng trong những tháng mùa đông và thấp hơn trong những tháng mùa hè.
+
+```{r message=FALSE, warning=FALSE}
+hotels %>% 
+  group_by(arrival_date, hotel) %>%
+  summarise(n_repeated_guests = sum(is_repeated_guest),
+            n_total = n(),
+            percent_of_bookings = round(100 * n_repeated_guests / n_total,
+                                        2)
+            ) %>% 
+  filter(n_repeated_guests > 0) %>% 
+  ggplot() +
+    geom_line(aes(x = arrival_date,
+                  y = percent_of_bookings,
+                  colour = hotel)
+              ) +
+  scale_color_manual(values=c("#1F77B4","#FF7F0E"))+
+  theme_minimal() +
+    facet_wrap(~ hotel, ncol = 2) +
+    labs(x = "Arrival Date",
+         y = "Percentage of Repeat Guests",
+         colour = "",
+         title = "Figure 16: Repeat Guests Time-Series by Hotel") -> repeat_guest_time_series_by_hotel
+ggplotly(repeat_guest_time_series_by_hotel)
+```
+
+## Analysis of Average Daily Rate
+
+`adr` trung bình trong mỗi tháng được sử dụng để đánh giá mức độ thay đổi của số tiền mà khách sẵn sàng chi tiêu tại khách sạn trong suốt cả năm.
+Hình 21 bên dưới hiển thị chuỗi thời gian cho dữ liệu .
+
+```{r}
+hotels %>% 
+  filter(is_canceled == FALSE) %>% 
+  mutate(arrival_year = year(arrival_date),
+         arrival_month = month(arrival_date),
+         arrival_time = ym(paste(arrival_year, arrival_month))
+         ) %>% 
+  select(-arrival_year, -arrival_month) %>% 
+  group_by(arrival_time) %>% 
+  summarise(monthly_mean_adr = mean(adr)) -> monthly_adr
+
+
+monthly_adr %>% 
+  ggplot() +
+    geom_line(aes(x = arrival_time, y = monthly_mean_adr), color = "#FF7F0E") +
+    theme_minimal() +
+    labs(x = "Month",
+         y = "Monthly Average of ADR (€)",
+         title = "Figure 17: Monthly ADR Time-Series") -> monthly_adr_time_series
+ggplotly(monthly_adr_time_series)
+```
+
+**Nhận xét:** Có vẻ như khách sạn sẵn sàng chi tiền nhiều hơn cho những tháng mùa hè sao với những tháng mùa đông .
+Dự báo mức trung bình hàng tháng sẽ là cơ sở tốt nhất để định giá.
+Mô hình ARIMA sẽ được sử dụng cho dự báo này.
+
+```{r}
+monthly_adr %>%
+  select(monthly_mean_adr) %>% 
+  as.ts() %>% 
+
+  auto.arima() -> monthly_adr_model
+
+
+monthly_adr_model %>% 
+  forecast(h = 24) %>%
+  as_tibble() %>% 
+
+  mutate(forecast_month_index = 1:n(),
+         forecast_month = add_with_rollback(ym("2017-08"),
+                                               months(forecast_month_index),
+                                            roll_to_first = TRUE)
+         ) %>% 
+  ggplot() +
+
+    geom_line(data = monthly_adr, aes(x = arrival_time,
+                                      y = monthly_mean_adr),
+              color = "#1F77B4") +
+    theme_minimal() +
+
+    geom_line(aes(x = forecast_month, y = `Point Forecast`), color = "#FF7F0E") +
+    labs(x = "Year",
+         y = "Monthly Average ADR (€)",
+         title = "Figure 18: Monthly ADR Forecast")
+```
+
+**Nhận xét:** Dự đoán trong hình 18 cho thấy `adr` trung bình hàng tháng sẽ giảm khi mùa hè kết thúc.
+Nhưng nó dự báo năm tới `adr` trung bình hàng tháng đạt đến một mức tiệm cận.
+Kết quả này không phù hợp với dữ liệu.
+
+## Analysis of Revenue
+
+```{r message=FALSE, warning=FALSE}
+hotels %>% 
+  mutate(total_stay = stays_in_weekend_nights + stays_in_week_nights,
+         revenue = adr * total_stay) -> hotels
+
+#Total revenue by hotel type and year
+hotels %>% 
+  filter(is_canceled == FALSE) %>% 
+  mutate(arrival_year = year(arrival_date)) %>% 
+  group_by(hotel, arrival_year) %>% 
+  summarise(total_revenue = sum(revenue)) %>% 
+  pivot_wider(names_from = arrival_year, values_from = total_revenue) %>% 
+  kable(format = "pipe",
+        caption = "Table 8: Total Hotel Revenue (€)")
+```
+
+**Nhận xét:** Trong mọi năm trừ 2015, City Hotel kiếm được nhiều tiền hơn so với khách sạn Resort.
+Trong nửa đầu năm 2017, doanh thu khoảng 5,6 triệu euro đối với City Hotel và 4,1 triệu euro đối với Resort Hotel.
+Giả sử trong nửa cuối năm 2017 có hiệu suất giống như 2015 thì tổng doanh thu năm 2017 sẽ cao hơn bất kỳ năm nào khác.
+
+Tổng doanh thu từ các lượt đặt phòng bị hủy bỏ thể hiện trong bảng 27 sau:
+
+```{r message=FALSE, warning=FALSE}
+hotels %>% 
+  filter(reservation_status != "Check-Out") %>% 
+  group_by(reservation_status, deposit_type) %>% 
+  summarise(total_revenue = sum(revenue)) %>% 
+  pivot_wider(names_from = deposit_type, values_from = total_revenue) %>% 
+  kable(format = "pipe",
+        caption = "Table 9: Revenue from Cancelled and No-Show Bookings (€)")
+```
+
+**Nhận xét:** Các lượt đặt phòng bị hủy bỏ tạo ra doanh thu gấp nhiều lần so với các trường hợp hủy bỏ do không đến nhận phòng.
+Việc tạo ra doanh thu không hoàn lại và có có hoàn lại sẽ hợp lý hơn vì khách sạn đang kiếm doanh thu thông qua tiền đặt cọc của khách.
+
+### Analysis of Revenue by Country
+
+```{r message=FALSE, warning=FALSE}
+hotels %>% 
+  group_by(country_name) %>% 
+  summarise(mean_revenue = mean(revenue)) %>% 
+  
+  ggplot() +
+   
+    geom_map(data = world_map,
+             map = world_map,
+             aes(map_id = region),
+             fill = "white",
+             color = "black"
+             ) +
+    
+    geom_map(aes(map_id = country_name,
+                 fill = mean_revenue),
+             map = world_map) +
+      expand_limits(x = world_map$long, y = world_map$lat) +
+      scale_fill_continuous(name = "", type = "viridis") +
+      labs(title = "Figure 20: Average Revenue per Booking World Map",
+           x = "Longitude (°)",
+           y = "Lattitude (°)"
+           )  
+```
+
+**Nhận xét:** Hầu hết các quốc gia có trung bình khoảng 500 euro trên mỗi lần đặt phòng.
+Ả-rập Xê-út, Ai Cập, Ghana và Ăng-gô-la đều là ví dụ về các quốc gia tạo ra doanh thu đặt phòng cao.
+Madagascar là một ví dụ về quốc gia có doanh thu trung bình trên mỗi lần đặt phòng thấp.
+
+# LOGISTIC REGRESSION
+
+## Traning and Testing Sets
+
+## Training Logistic Regresstion Model
+
+
+## In-sample Prediction and ROC curve
+
+
+## Out-of-sample Prediction and ROC curve
+
+
+## Kết luận
+
+
+
+
+
+
+# SUMMARY
+
+
+## Phương pháp phân tích
+
+
+
+## Kết quả
+
+
+## Hướng phát triển
+
+
+
+# REFERENCES
+
+[1] N.
+Antonio, A.
+de Almeida and L.
+Nunes, [Hotel booking demand datasets](https://www.sciencedirect.com/science/article/pii/S2352340918315191), Volume 22, February 2019.\
+
+[2] T.
+Mock and A.
+Bichat.
+"Hotels." [rfordatascience / tidytuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-02-11/readme.md)

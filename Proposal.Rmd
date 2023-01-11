@@ -1,0 +1,799 @@
+---
+title: "Nhóm 14 - Phân tích nhu cầu đặt phòng khách sạn - Proposal"
+author: 
+- Nguyễn Thị Diệu Hiền - 20133040
+- Huỳnh Nguyễn Như Nguyên - 20133019
+output:
+  html_document:
+    css: ./lab.css
+    highlight: pygments
+    theme: cerulean
+    toc: true
+    toc_float: true
+date: "`r format(Sys.time(), '%d %B %Y')`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Introduction
+## Giới thiệu
+
+Khách sạn trực tiếp tạo ra doanh thu cho các nền kinh tế địa phương khi khách du lịch chi tiền trong khách sạn, nhà hàng và địa điểm giải trí. Ngành khách sạn đang phát triển, ngày càng có nhiều người chi tiền cho các hoạt động nghỉ dưỡng và giải trí. Mọi người chỉ có thể vào khách sạn khi đó là một kỳ nghỉ lễ hoặc một sự kiện đặc biệt, do đó nhu cầu ở trong phòng không phân bổ đều trong năm. Ngành khách sạn là một ngành rất biến động và việc đặt phòng phụ thuộc vào nhiều yếu tố như loại khách sạn, tính thời vụ, ngày trong tuần, v.v. Điều này làm cho việc phân tích các mẫu có sẵn trong dữ liệu quá khứ trở nên quan trọng hơn để giúp các khách sạn lập kế hoạch tốt hơn. Sử dụng dữ liệu lịch sử, các khách sạn có thể thực hiện các chiến dịch khác nhau để thúc đẩy hoạt động kinh doanh. Dữ liệu bao gồm khoảng 119.390 giao dịch đặt phòng từ 2 khách sạn: một khách sạn thành phố từ Lisbon ("City Hotel") và một khách sạn nghỉ dưỡng từ Algarve ("Resort Hotel"). Bộ dữ liệu bao gồm các lượt đặt trước sẽ đến trong khoảng thời gian từ ngày 1 tháng 7 năm 2015 đến ngày 31 tháng 8 năm 2017, bao gồm các lượt đặt trước đã đến và các lượt đặt trước đã bị hủy. Có rất nhiều điều để khám phá từ dữ liệu này, nhưng nhóm sẽ chỉ tập trung vào dự báo nhu cầu.
+Nhóm sẽ đặt ra 5 câu hỏi như sau:
+  1. Các đặt phòng đến từ đâu?
+  2. Tần suất hủy bỏ đối với khách hàng và khả năng họ không đến nhận phòng là bao nhiêu?
+  3. Xu hướng về mức có thể tính cho khách hàng là bao nhiêu?
+  4. Khách sạn có thể kiếm được bao nhiêu doanh thu trên mỗi lần đặt phòng và bao nhiêu tiền đến từ mỗi quốc gia?
+  5. Dự đoán xu hướng hủy bỏ đặt phòng.
+
+## Đề xuất phương pháp phân tích
+
+Số lượng đật phòng theo quốc gia và kênh phân phối sẽ được trả lời các lượt đặt trước đến từ đâu.
+Tần suất hủy phòng và không đến nhận phòng sẽ được đánh giá bằng cách chia số lượng đặt phòng bị hủy cho tổng số lượng đặt phòng. Tỷ lệ hủy phòng sẽ được tính theo quốc gia để xác định quốc gia nào có tỷ lệ hủy phòng cao nhất.
+Doanh thu sẽ được tính từ dữ liệu đặt phòng. Điều này sẽ liên quan đến việc nhân thời gian lưu trú với tỷ lệ trung bình cho khách. Doanh thu thu được từ các đặt phòng bị hủy sẽ được lập bảng. Doanh thu đặt phòng trung bình sẽ được sử dụng để so sánh các đặt phòng từ các quốc gia khác nhau.
+Phát triển một mô hình dự đoán đặt phòng có hủy và không hủy bằng cách sử dụng hồi quy logistic.
+
+## Mục đích phân tích
+
+Việc phân tích nhằm mục đích đạt được cái nhìn sâu sắc thú vị về hành vi của khách hàng khi đặt phòng khách sạn. Để tối ưu hóa doanh thu mà khách sạn đạt được, ban quản lý thường sử dụng chiến lược định giá, một trong số đó là tăng giá phòng khi nhu cầu cao và khuyến mãi khi nhu cầu thấp. Do đó, khả năng dự báo chính xác nhu cầu trong tương lai là rất quan trọng và trở thành một phần quan trọng trong kế hoạch định giá. Nhu cầu đối với các phân khúc khách hàng khác nhau có thể khác nhau và việc dự báo trở nên khó khăn hơn vì nó có thể yêu cầu các mô hình khác nhau cho các phân khúc khác nhau. Những thông tin chi tiết này có thể hướng dẫn các khách sạn điều chỉnh chiến lược khách hàng của họ và chuẩn bị cho những điều chưa biết.
+
+# Packages
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(lubridate)
+library(patchwork)
+library(ISOcodes)
+library(maps)
+library(ggpubr)
+```
+
+```{r, echo=FALSE}
+table1 <- read.csv("data/table-packages.csv")
+table1 %>% kable(format="pipe",
+                 caption="Table 1: Package Summaries")
+```
+
+# Data Dictionary
+Dưới đây là bảng mô tả các biến
+```{r, echo=FALSE}
+table3 <- read.csv("data/data-description.csv")
+table3 %>% kable(format="pipe",
+                 caption="Table 2: Data Description")
+```
+# Data Preparation
+
+Trong phần này nhóm sẽ mô tả quá trình chuẩn bị và xử lý dữ liệu bao gồm nhập dữ liệu, xử lý dữ liệu bị thiếu, cấu trúc lại một số biến. Vì số lượng biến rất lớn nên nhóm sẽ gom các biến (variables) lại thành các tiểu mục (subsection) để tiện cho quá trình phân tích. Bảng 2 dưới dây mô tả các tiểu mục
+
+```{r, echo=FALSE}
+table2 <- read.csv("data/subsection.csv")
+table2 %>% kable(format="pipe",
+                 caption="Table 3: Subsection Variables")
+```
+
+
+
+## Import Data
+
+Dữ liệu ban đầu từ bài báo "Hotel Booking Demand Datasets" được viết bởi Nuno Antonio, Ana Almeida, and Luis Nunes, February 2019.[1] Nhóm đã tải xuống dữ liệu đã được làm sạch từ #TidyTuesday.[2]
+
+```{r message = FALSE, warning =FALSE}
+#load tập dữ liệu
+hotels <- read_csv("data/hotels.csv")
+```
+
+```{r message = FALSE, warning =FALSE}
+#Xem cấu trúc của dữ liệu
+glimpse(hotels)
+```
+
+
+
+
+## Arrival Date
+
+`arrival_date_year`, `arrival_date_month`, `arrival_date_week_number` và `arrival_date_day_of_month` đều chỉ thời gian khách đã đến khách sạn nên sẽ được hợp thành một biến duy nhất `arrival_date`
+
+### Hợp nhất các biến Arrival Date
+
+Hợp nhất các biến trên thành một biến duy nhất `arrival_date` bằng cách dùng `lubridate`
+```{r}
+hotels %>%
+  #khởi tạo một biến arrival_date với ngày, tháng, năm
+  mutate(arrival_date = paste(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year,
+                              sep = "/")) %>%
+  #chuyển character về date
+  mutate(arrival_date = dmy(arrival_date)) %>%
+  
+  #loại bỏ các biến sau khi hợp nhất khỏi hotels
+  select(-c(arrival_date_year,
+            arrival_date_month,
+            arrival_date_day_of_month,
+            arrival_date_week_number)) -> hotels
+
+```
+
+
+
+## Guest Demographics
+
+Trong phần này sẽ xử lý với các biến `adults`, `children`, `babies` và `country`. Xóa bỏ các quan sát không có khách và các quan sát với country là `NA`
+
+
+```{r }
+#================== ADULTS VARIABLE =================================
+  #tạo biểu đồ boxplot cho adults
+  hotels %>%
+    ggplot(aes(x = adults)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Number of Adults", title = "Boxplot") -> adults_boxplot
+
+  #tạo biểu đồ histogram cho adults
+  hotels %>%
+    ggplot(aes(x = adults)) +
+    geom_histogram(fill = "#1F77B4", breaks=seq(0,40,2)) +
+    theme_classic2()+
+    labs(x = "Number of Adults", title = "Histogram") -> adults_histogram
+  
+  #kết hợp 2 biểu đồ
+  adults_boxplot + adults_histogram -> adults_boxplot_and_histogram
+
+
+
+#============ CHILDREN VARIABLE =========================
+
+  #Có 4 `NA` cho biến `children`, có thể là do lỗi của việc nhập dữ liệu. Các `NA` này sẽ được coi là `0`
+  hotels %>% 
+    mutate(children = case_when(is.na(children) ~ 0,
+                                TRUE ~ children)
+           ) -> hotels
+  #Boxplot
+  hotels %>% 
+    ggplot(aes(x = children)) + 
+      geom_boxplot(fill = "#FF7F0E") +
+      theme_classic2() +
+      labs(x = "Number of Children", title = "Boxplot") -> children_boxplot
+  #Histogram
+  hotels %>% 
+    ggplot(aes(x = children)) + 
+      geom_histogram(fill = "#1F77B4", breaks=seq(0,40,2)) +
+      theme_classic2() +
+      labs(x = "Number of Children", title = "Histogram") -> children_histogram
+  
+  children_boxplot + children_histogram -> children_boxplot_and_histogram
+
+#======================== BABIES VARIABLE ======================================
+
+  #boxplot 
+  hotels %>% 
+    ggplot(aes(x = babies)) + 
+      geom_boxplot(fill = "#FF7F0E") +
+      theme_classic2() +
+      labs(x = "Number of Babies", title = "Boxplot") -> babies_boxplot
+  
+  #histogram 
+  hotels %>% 
+    ggplot(aes(x = babies)) + 
+      geom_histogram(fill = "#1F77B4", breaks=seq(0,10,0.5)) +
+      theme_classic2() +
+      labs(x = "Number of Babies", title = "Histogram") -> babies_histogram
+  
+  babies_boxplot + babies_histogram -> babies_boxplot_and_histogram
+
+#==================== COUNTRY VARIABLE =========================================
+  #Đối với biến `country` đầu tiên chúng ta chuyển giá trị `NULL` thành `NA`
+  hotels %>% 
+  mutate(country = na_if(country, "NULL")) -> hotels
+  
+  #Sau đó loại bỏ các giá trị `NA` này vì mỗi khách phải có một `country` nhất định và chuyển `country` về dạng factor
+  hotels %>% 
+  filter(!is.na(country)) %>% 
+  mutate(country = as.factor(country)) -> hotels
+  
+#===============================================================================
+
+ggarrange(adults_boxplot_and_histogram, babies_boxplot_and_histogram,children_boxplot_and_histogram, nrow = 3, ncol = 1) +
+  plot_annotation("Figure 1: Adults, Babies, Children Boxplot and Histogram")
+```
+
+**Nhận xét: ** Biểu đồ boxplot và histogram trong hình 1 trên cho thấy 
+- Hầu hết các quan sát dao động từ 1-3 khách. Tuy nhiên có một vài trường hợp nhiều hơn, điều này xảy ra có thể do một số lượt đặt phòng cho các đại lý du lịch hoặc công ty lữ hành thực hiện. Do đó,không nên xóa các biến này .
+- Hầu hết khách đến khách sạn mà không mang theo trẻ em. Số trẻ em lớn nhất là 10
+- Phần lớn khách không mang theo trẻ sơ sinh đến các khách sạn này. Số lượng trẻ sơ sinh lớn nhất được quan sát là 10. Kết quả này không được coi là outlier vì có thể có một số trường hợp đặc biệt như vậy.
+- Có 180 quan sát mà không có khách nào được ghi lại cho một đặt phòng. Chúng ta sẽ loại bỏ nó đi
+
+```{r}
+hotels %>% 
+  filter(adults + children + babies >= 1) -> hotels
+```
+
+
+## Reservation Status
+
+Phần này mô tả sự đặt phòng của khách và sẽ làm việc với các biến `reservation_status`, `reservation_status_date`, `is_canceled, lead_time`, `days_in_waiting_list`.
+
+
+```{r}
+#==================== IS_CANCELLED VARIABLE ====================================
+
+#Chuyển `is_canceled` về dạng logic
+hotels %>% 
+  mutate(is_canceled = as.logical(is_canceled)) -> hotels
+
+#===================== LEAD_TIME VARIABLE ======================================
+
+#Boxplot de xac dinh outlier
+hotels %>% 
+  ggplot(aes(lead_time)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Lead Time (days)",
+         title = "Lead Time Boxplot") -> lead_time_boxplot
+
+#===================== DAY_IN_WAITING_LIST VARIABLE ============================
+hotels %>% 
+  ggplot(aes(days_in_waiting_list)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Days in Waiting List (days)",
+         title = "Days in Waiting List Boxplot") -> days_in_waiting_list_boxplot
+#===================== RESERVATION_STATUS VARIABLE =============================
+
+#Chuyển về dạng factor 
+hotels %>% 
+  mutate(reservation_status = as.factor(reservation_status)) -> hotels
+
+#===============================================================================
+
+ggarrange(lead_time_boxplot, days_in_waiting_list_boxplot) +
+  plot_annotation("Figure 2: Lead Time and Days in Waiting List Boxplot")
+
+```
+
+**Nhận xét: **Dựa vào hình 2
+- Chúng ta sẽ loại bỏ các quan sát có `lead_time` > 625 khỏi tạp dữ liệu.
+
+```{r}
+hotels %>% 
+  filter(lead_time <= 625) -> hotels
+```
+
+- Các `days_in_waiting_list` > 200 là outlier. Ta sẽ tiến hành loại bỏ 
+
+```{r}
+hotels %>% 
+  filter(days_in_waiting_list <= 200) -> hotels
+```
+
+
+
+## User Karma
+
+User Karma chứa các biến số phản ánh hành vi của người dùng đối với khách sạn. Phần này sẽ làm việc với các biến `is_repeated_guest`, `previous_cancellations`, và `previous_bookings_not_cancelled`.
+
+
+```{r}
+#==================== IS_REPEATED_GUEST VARIABLE ===============================
+
+#Chuyển về dạng logical
+hotels %>% 
+  mutate(is_repeated_guest = as.logical(is_repeated_guest)) -> hotels
+
+#==================== PREVIOUS_CANCELLATIONS VARIABLE ===========================
+hotels %>% 
+  ggplot(aes(previous_cancellations)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Previous Cancellations",
+         title = "Previous Cancellations") -> previous_cancellations_boxplot
+
+#=================PREVIOUS_BOOKINGS_NOT_CANCELLED VARIABLE =====================
+hotels %>% 
+  ggplot(aes(previous_bookings_not_canceled)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Previous Bookings not Cancelled",
+         title = "Previous Bookings not Cancelled") -> previous_bookings_not_cancelled_boxplot
+
+#===============================================================================
+ggarrange(previous_cancellations_boxplot, previous_bookings_not_cancelled_boxplot) +
+  plot_annotation("Figure 3: Previous Cancellations and Previous Bookings not Cancelled Boxplot ")
+
+```
+
+**Nhận xét: ** Dựa theo hình 3
+- `previous_cancellations` > 10 là outlier nhưng sẽ không loại bỏ để tránh phạt các đại lý du lịch và các công ty đặt phòng sẽ phải hủy thay cho khách 
+- Không chỉ rõ một ngưỡng rõ ràng cho các trường hợp outlier  của  `previous_bookings_not_cancelled`
+
+
+
+## Guest Accommodations
+
+Phần này bao gồm các biến mô tả chỗ ở mà mỗi đơn đặt phòng nhận được. Cụ thẻ là `stays_in_weekend_nights`, `stays_in_week_nights`, `reserved_room_type`, `assigned_room_type`, `meals`, `required_car_parking_spaces`, và `total_of_special_requests`
+
+
+```{r}
+#===================== STAYS_IN_WEEKEND_NIGHTS VARIABLE ========================
+hotels %>% 
+  ggplot(aes(stays_in_weekend_nights)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Stays in Weekend Nights",
+         title = "Stays in Weekend Nights") -> stays_in_weekend_nights_boxplot
+#========================== STAY_IN_WEEK_NIGHTS ================================
+
+hotels %>% 
+  ggplot(aes(stays_in_week_nights)) +
+    geom_boxplot(fill = "#FF7F0E") +
+    theme_classic2() +
+    labs(x = "Stays in Week Nights",
+         title = "Figure 9: Stays in Week Nights") -> stays_in_week_nights_boxplot
+#============== `reserved_room_type, assigned_room_type` variables==============
+
+#Đối với các biến này chỉ cần chuyển về dạng factor
+hotels %>% 
+  mutate(reserved_room_type = as.factor(reserved_room_type)) -> hotels
+
+#=========================== `meals` variable ==================================
+
+#Đối với biến `meals`, chúng ta sẽ chuyển các ký tự viết tắt về dạng đầy đủ sau đó chuyển về dạng factor
+hotels %>% 
+  mutate(meal = case_when(meal == "Undefined" ~ "No Meal Plan",
+                          meal == "SC" ~ "No Meal Plan",
+                          meal == "BB" ~ "Bed and Breakfast",
+                          meal == "HB" ~ "Half Board",
+                          meal == "FB" ~ "Full Board")
+         ) %>% 
+  mutate(meal = as.factor(meal)) -> hotels
+
+#===============================================================================
+
+ggarrange(stays_in_weekend_nights_boxplot, stays_in_week_nights_boxplot) +
+  plot_annotation(" Figure 4: Stays in Weekend Nights and Stays in Week Nights Boxplot")
+
+```
+
+**Nhận xét: ** Dựa theo hình 4 `stays_in_weekend_nights` và `stays_in_weeks_nights` > 5 là outlier nhưng không bị loại bỏ vì có những trường hợp kéo dài thời gian lưu trú 
+
+
+## Booking Information
+
+Phần này sẽ làm việc với các biến mô tả các thực thể tham gia vào việc đặt phòng.
+`hotel, market_segment`, `distribution_channel`, `booking_changes`, `deposit_type`, `agent`, `company`, và `customer_type`
+
+
+```{r}
+#======================== `hotel` variable =====================================
+    hotels %>% 
+      mutate(hotel = as.factor(hotel)) -> hotels
+
+#========================= `market_segment` variable ===========================
+
+  #Loại bỏ các giá trị "Undefined" và chuyển biến này về dạng factor
+  hotels %>% 
+    filter(market_segment != "Undefined") %>% 
+    mutate(market_segment = as.factor(market_segment)) -> hotels
+
+#======================== `distribution_channel` variable ======================
+
+  #Tương tự với `market_segment`, ta cũng loại bỏ "Undefined" và chuyển `distribution_channel` về dạng factor
+  hotels %>% 
+  filter(distribution_channel != "Undefined") %>% 
+  mutate(distribution_channel = as.factor(distribution_channel)) -> hotels
+
+#========================= `agent`, `company` variables ========================
+  #Chuyển `NULL` về `NA` sau đó chuyển về kiểu numeric
+  hotels %>% 
+  mutate(agent = na_if(agent, "NULL")) %>% 
+  mutate(agent = as.numeric(agent)) -> hotels
+
+  hotels %>% 
+  mutate(company = na_if(company, "NULL")) %>% 
+  mutate(company = as.numeric(company)) -> hotels
+
+#========================= `customer_type` variable ============================
+  #Chuyển biến này về dạng factor 
+  hotels %>%
+    mutate(customer_type = as.factor(customer_type)) -> hotels
+```
+
+
+## Average Daily Rate
+
+Doanh thu trung bình hàng ngày được tính bằng cách chia tổng số giao dịch liên quan đến đặt phòng cho tổng số đêm
+
+```{r}
+hotels %>% 
+  select(adr) %>% 
+  summary
+```
+
+-- Ta sẽ loại bỏ giá trị âm 
+
+```{r}
+hotels %>% 
+  filter(adr >= 0) -> hotels
+```
+
+# Data summary
+
+Dùng hàm `glimse` để xem lại cấu trúc của dữ liệu
+
+```{r}
+glimpse(hotels)
+```
+
+**Nhận xét: ** Sau khi loại bỏ các giá trị NA, tập dữ liệu còn lại 118450 quan sát. Chỉ 0,79% các quan sát bị loại bỏ trong quá trình chuẩn bị dữ liệu.
+
+
+
+## Arrival Date
+
+```{r}
+#Dếm số đặt phòng mỗi tháng
+hotels %>% 
+  count(month(arrival_date, label = TRUE, abbr = FALSE)) %>% 
+  kable(format = "pipe",
+        col.names = c("Arrival Month", "Total Number of Bookings"),
+        caption = "Table 4: Total Number of Bookings by Month")
+```
+
+**Nhận xét: ** Theo Bảng 4, những tháng mùa hè là bận rộn nhất đối với các khách sạn dựa trên ngày đến đã đặt trước. Các tháng mùa đông ít phổ biến hơn đáng kể, với tháng Giêng có ít đặt phòng nhất là 5866.
+
+## Guest Demographics
+
+Các biến `adults`, `children`, `babies` có dữ liệu tương tự nhau. Bảng 5 dưới đây tóm tắt sự phân bố của chúng
+
+```{r}
+hotels %>% 
+  select(adults, children, babies) %>% 
+  summarise(across(.fns = summary)) -> guest_age_summary
+
+tibble(c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max."),
+       guest_age_summary) -> guest_age_summary
+
+guest_age_summary %>% 
+  kable(format = "pipe",
+        col.names = c("", "Adults", "Children", "Babies"),
+        caption = "Table 5: Guest Age Demographics")
+```
+
+**Nhận xét: ** Theo bảng 5, trên 75% khách không mang theo trẻ em hoặc trẻ sơ sinh. Các đặt phòng hầu hết là 2 người lớn hoặc 1, có trường hợp là 0. Điều này cũng có thể có những khách đặt phòng riêng cho con họ.
+
+### Top countries by number of bookings
+
+```{r}
+# 10 quốc gia có số lượng đặt phòng lớn nhất
+hotels %>% 
+  count(country) %>% 
+ 
+  left_join(y = ISO_3166_1, by = c("country" = "Alpha_3")) %>% 
+  
+  select(country, Name, n) %>% 
+  
+  slice_max(order_by = n, n = 10) %>% 
+  kable(format = "pipe",
+        col.names = c("Abbr.",
+                      "Country",
+                      "Number of Bookings"),
+        row.names = TRUE,
+        caption = "Table 6: Top 10 Countries by Number of Bookings")
+```
+
+**Nhận xét: ** Các lượt đặt trước từ Bồ Đào Nha chiếm số lượng đặt trước lớn nhất. Hầu hết các quốc gia lọt vào danh sách 10 nước hàng đầu đều nằm ở Châu Âu. Brazil là quốc gia duy nhất bên ngoài châu Âu góp mặt trong Bảng 6, nằm ở Nam Mỹ. Cùng với nhau, Bồ Đào Nha, Vương quốc Anh và Pháp chiếm hơn một nửa số lượt đặt trước.
+
+## Reservation status
+
+### Number of Bookings by Reservation Status
+
+```{r}
+#Lập bảng danh mục trạng thái đặt chỗ khác nhau
+hotels %>% 
+  count(reservation_status) %>% 
+  kable(format = "pipe",
+        col.names = c("Reservation Status", "Number of Bookings"),
+        caption = "Table 7: Number of Bookings by Reservation Status"
+        )
+```
+
+**Nhận xét: ** Phần lớn các đặt phòng hoàn thành với việc khách nhận phòng và sau đó tiến hành trả phòng. Số lượt hủy bỏ chỉ chiếm dưới một nửa số lượt đặt phòng. Tuy nhiên, chỉ có 1202 lượt đặt phòng hoàn thành với việc khách không không đến nhận phòng.
+
+### Number of Booking Final Updates by Month
+
+Số lượng cập nhật booking cuối cùng mỗi tháng
+
+```{r}
+#Đếm số lần cập nhật trạng thái cuối cùng theo tháng
+hotels %>% 
+  count(month(reservation_status_date, label = TRUE, abbr = FALSE)) %>% 
+  kable(format = "pipe",
+        col.names = c("Month", "Number of Bookings"),
+        caption = "Table 8: Number of Booking Final Updates by Month")
+```
+
+**Nhận xét: ** Tháng 7 có nhiều bản cập nhật cuối cùng nhất. Điều này đã xảy ra mặc dù thực tế là tháng 8 có nhiều đặt trước hơn theo Bảng 4. Những khách đã hủy trước khi đặt trước có thể đã thay đổi `reservation_status_date` trong tháng họ đã đến. Bất kỳ khách nào đến và trả phòng vào các tháng khác nhau cũng sẽ có `reservation_status_date` tháng không khớp với tháng đến của họ. Không có mẫu rõ ràng nào được hiển thị từ bảng này.
+
+### Cancelled Bookings
+
+Có 43981 lượt đặt trước bị hủy, tương đương khoảng 37,304348% số lượt đặt. Điều này cho thấy rằng khách hủy đặt phòng là một thiểu số nhỏ nhưng gây rối cho các khách sạn. 
+
+### Lead Time and Days in Waiting List
+
+```{r}
+hotels %>% 
+  select(lead_time, days_in_waiting_list) %>% 
+  summarise(across(.fn = summary)) %>% 
+  
+  mutate(stat_labels = c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.",
+                         "Max.")
+         ) %>% 
+ 
+  select(stat_labels, lead_time, days_in_waiting_list) %>% 
+  kable(format = "pipe",
+        col.names = c("", "Lead Time", "Days in Waiting List"),
+        caption = "Table 9: Lead Time and Days in Waiting List Summaries")
+```
+
+Median của `lead_time` là 69 days. Nói cách khác, khách đã đặt phòng khoảng 2 tháng trước `arrival_date`. Chỉ có khoảng 25% khách đặt phòng trước hơn 5 tháng. 25% khách đã đặt phòng trước 18 ngày hoặc ít hơn trước khi họ lưu trú. Những vị khách vào phút cuối này sẽ rất hữu ích trong việc điền vào các đặt phòng bị hủy trong thời gian ngắn.
+
+Ít hơn 25% khách trong danh sách chờ dựa trên Bảng 9. Điều này có thể là do khách rút lhỏi hệ thống đặt phòng khi họ nhận ra rằng các khách sạn đã được đặt trước.
+
+## User Karma
+
+### Repeated Guest
+
+Có 3750 lượt đặt phòng từ khách cũ. Tập trung vào việc thu hút khách mới quan trọng hơn việc thu hút khách ở lại nhiều lần từ khách cũ
+
+### Previous Cancellations and Previous Bookings Not Cancelled
+
+Thống kế tóm tắt các biến số này thể hiện trong Bảng 10
+
+```{r}
+#Tạo một bảng tóm tắt cho previous_cancellations và previous_bookings_not_cancelled
+hotels %>% 
+  select(previous_cancellations, previous_bookings_not_canceled) %>% 
+  summarise(across(.fn = summary)) %>% 
+  # Đặt tên cho các cột
+  mutate(stat_labels = c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.",
+                         "Max.")
+         ) %>% 
+  
+  select(stat_labels,
+         previous_cancellations,
+         previous_bookings_not_canceled) %>% 
+  kable(format = "pipe",
+        col.names = c("",
+                      "Previous Cancellations",
+                      "Previous Bookings not Cancelled"),
+        caption = "Table 10: Previous Cancellations and Previous Bookings not Cancelled Summary")
+```
+
+**Nhận xét: ** Theo Bảng 10, phần lớn khách đặt phòng không hủy phòng trước. Tuy nhiên, một số khách có số lần hủy cao, trong đó số lần hủy lớn nhất được ghi nhận là 26. Tuy nhiên, hầu hết các khách không có đặt phòng trước đó mà không bị hủy. Điều này hợp lý vì hầu hết các đặt phòng là của khách mới.
+
+## Guest Accommodations
+
+### Stays in weekend nights, Stays in week nights, Required car parking spaces, and Total of special requests
+
+```{r}
+hotels %>% 
+  select(stays_in_weekend_nights,
+         stays_in_week_nights,
+         required_car_parking_spaces,
+         total_of_special_requests) %>% 
+  summarise(across(.fn = summary)) %>% 
+  
+  mutate(stat_labels = c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.",
+                         "Max.")
+         ) %>% 
+  
+  select(stat_labels,
+         stays_in_weekend_nights,
+         stays_in_week_nights,
+         required_car_parking_spaces,
+         total_of_special_requests) %>% 
+  kable(format = "pipe",
+        col.names = c("",
+                      "Stays in Weekend Nights",
+                      "Stays in Week Nights",
+                      "Required Parking Spaces",
+                      "Total Special Requests")
+        )
+```
+
+**Nhận xét: ** Theo bảng trên, số đêm cuối tuần và đêm trong tuần trung bình lần lượt là 1 và 2 đêm. Có thể giải thích cho điều này là khách đã ở khách sạn vào Thứ Sáu và Thứ Bảy trước khi trả phòng vào Chủ Nhật. Có một số thời gian lưu trú dài, trong đó thời gian lưu trú dài nhất là 8 tuần.
+Hầu hết khách không yêu cầu chỗ đậu xe hoặc có bất kỳ yêu cầu đặc biệt nào. Việc khách không sử dụng bãi đậu xe có thể ngụ ý rằng họ đang ở gần khách sạn hoặc họ thấy phương tiện công cộng địa phương phù hợp.
+
+### Room Type 
+
+```{r}
+hotels %>% 
+  # Đếm số lượng loại phòng đã được đặt trước
+  count(reserved_room_type) %>% 
+  
+  full_join(y = count(hotels, assigned_room_type),
+            by = c("reserved_room_type" = "assigned_room_type")) %>% 
+  kable(format = "pipe",
+        col.names = c("Room Type", "Reserved", "Assigned"),
+        caption = "Table 11: Reserved vs. Assigned Room Type Comparison")
+```
+
+**Nhận xét: **Hầu như tất cả khách đều được phân vào phòng loại A và D. Đây cũng là những chỗ ở phổ biến nhất tại thời điểm đặt phòng. Vì vậy, có vẻ như đây là những phòng mong muốn nhất cho khách. Mặc dù không có ai đặt phòng Loại I và K, một số khách đã được chỉ định cho các phòng này. Điều thú vị là chỉ có 6 đặt phòng được thực hiện cho loại phòng L, và chỉ có một đặt phòng thành công có được phòng như vậy. 
+
+## Booking Information
+
+### Hotel Type 
+
+```{r}
+hotels %>% 
+  count(hotel) %>% 
+  kable(format = "pipe",
+        col.names = c("Hotel Type", "Number of Bookings"),
+        caption = "Table 12: Number of Bookings by Hotel Type")
+```
+
+**Nhận xét: **Phần lớn các đặt phòng đã được thực hiện cho khách sạn thành phố. Tuy nhiên, cả hai khách sạn đều nhận được một lượng lớn đặt phòng.
+
+### Market segment
+
+Số lượng đặt trước trong mỗi phân khúc được lập bảng trong Bảng 13 theo thứ tự giảm dần.
+
+```{r}
+hotels %>% 
+  count(market_segment) %>% 
+  # Sắp xếp kết quả giảm dần
+  arrange(desc(n)) %>% 
+ 
+  mutate(percent_of_bookings = round(100 * n / sum(n),
+                                     2)
+         ) %>% 
+  kable(format = "pipe",
+        col.name = c("Market Segment",
+                     "Number of Bookings",
+                     "Percent of Bookings"),
+        caption = "Table 13: Bookings by Market Segment")
+```
+
+**Nhận xét: **Cho đến nay, các đại lý du lịch và công ty lữ hành là phân khúc thị trường lớn nhất, chiếm ~67% lượng đặt phòng. Complementary và Aviation đều có thị phần rất nhỏ. Điều này có ý nghĩa, bởi vì một khách sạn sẽ không thường xuyên cung cấp các đợt lưu trú miễn phí nếu họ muốn tiếp tục kinh doanh. Đặt phòng trực tiếp của khách chiếm khoảng 10% số lượng đặt phòng.
+
+### Distribution Channel
+
+```{r}
+hotels %>% 
+  count(distribution_channel) %>% 
+  arrange(desc(n)) %>% 
+
+  mutate(percent_of_bookings = round(100 * n / sum(n),
+                                     2)
+         ) %>% 
+  kable(format = "pipe",
+        col.name = c("Distribution Channel",
+                     "Number of Bookings",
+                     "Percent of Bookings"),
+        caption = "Table 14: Bookings by Distribution Channel")
+```
+
+Hơn 80% số lượt đặt trước được tạo ra cho các đại lý du lịch và công ty lữ hành. Tiếp thị cho các thực thể này phải là một phương pháp hiệu quả để thúc đẩy doanh số bán hàng. Đặt phòng trực tiếp bởi khách là kênh lớn nhất tiếp theo. Đặt phòng của công ty chỉ chiếm khoảng 5% số lượng đặt phòng.
+
+### Booking Changes
+
+```{r}
+hotels %>% 
+  select(booking_changes) %>% 
+  summarise(summary(booking_changes)) -> changes_summary
+
+
+tibble(c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max."),
+       changes_summary) %>% 
+  kable(format = "pipe",
+        col.names = c("", ""),
+        caption = "Table 15: Booking Changes Summary Statistics")
+```
+
+**Nhận xét: **Hơn 75% khách không thay đổi đặt phòng sau khi thực hiện. Tuy nhiên, có một số khách đã thực hiện một số lượng lớn các thay đổi. Với thực tế là 37,13% số lượt đặt phòng đã bị hủy, chúng tôi có thể kết luận rằng việc hủy phòng không được khách sạn coi là thay đổi đặt phòng.
+
+### Deposit Type
+
+```{r}
+hotels %>% 
+  count(deposit_type) %>% 
+  
+  arrange(desc(n)) %>% 
+
+  mutate(percent_of_bookings = round(100 * n / sum(n),
+                                     2)
+         ) %>% 
+  kable(format = "pipe",
+        col.name = c("Deposit Type",
+                     "Number of Bookings",
+                     "Percent of Bookings"),
+        caption = "Table 16: Bookings by Deposit Type")
+```
+
+```{r}
+ggplot() +
+    geom_bar(aes(x = hotels$deposit_type, fill = hotels$deposit_type )) +
+    coord_flip() +
+    scale_fill_manual(values=c("#1F77B4","#FF7F0E","#B91657"))+
+    labs(x = "",
+         y = "Number of Bookings",
+         fill = "Deposit Type",
+         title = "Bookings by Deposit Type")
+```
+
+
+**Nhận xét: **Hầu như tất cả các đặt phòng đã được thực hiện mà không cần đặt cọc trước. Những vị khách này sẽ là thách thức lớn nhất đối với việc hủy phòng, vì họ không tạo ra bất kỳ doanh thu nào từ những vị khách này trong khi họ đang giữ phòng. Khi một khoản đặt cọc được thực hiện, nó hầu như luôn được thực hiện dưới dạng một khoản đặt cọc không hoàn lại. Chỉ một phần rất nhỏ trong số khách đặt cọc được hoàn lại.
+
+### Customer Type
+
+```{r}
+hotels %>% 
+  count(customer_type) %>% 
+  
+  arrange(desc(n)) %>% 
+  
+  mutate(percent_of_bookings = round(100 * n / sum(n),
+                                     2)
+         ) %>% 
+  kable(format = "pipe",
+        col.name = c("Customer Type",
+                     "Number of Bookings",
+                     "Percent of Bookings"),
+        caption = "Table 17: Bookings by Customer Type")
+```
+
+```{r echo =FALSE}
+ percent <- hotels %>% 
+  count(customer_type) %>% 
+  
+  arrange(desc(n)) %>% 
+  
+  mutate(percent_of_bookings = round(100 * n / sum(n),
+                                     2)
+         )
+pie(percent$percent_of_bookings, labels = percent$percent_of_bookings, main = "Bookings by Customer Type", col = c("#1F77B4","#FF7F0E","#B91657","#04AA6D"))
+
+```
+
+
+
+**Nhận xét: **Hơn 95% số lượt đặt trước thuộc Transient và Transient-Party. Mặc dù các đại lý du lịch và công ty lữ hành chiếm tỷ trọng lớn trong các phân khúc thị trường nhưng họ không thực hiện đặt phòng theo nhóm. Điều này hợp lý vì số lượng khách thông thường liên quan đến đặt phòng chỉ là 2 người.
+
+### Average Daily Rate
+
+```{r}
+hotels %>% 
+  summarise(summary(adr)) -> adr_summary
+
+
+tibble(c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max."),
+       adr_summary) %>% 
+  kable(format = "pipe",
+        col.names = c("", ""),
+        caption = "Table 18: Average Daily Rate Summary Statistics (\u20ac)")
+```
+
+***Nhận xét: **95 là tỷ lệ trung bình hàng ngày cho khách. 0 là tỷ lệ hàng ngày không âm tối thiểu. Điều này có vấn đề vì những vị khách như vậy không tạo ra lợi nhuận cho khách sạn của họ. Tối đa 5400 là rất tốt và chúng ta muốn thu hút những lượt đặt phòng như vậy trong tương lai.
+
+# Exploratory Data Analysis
+## Analysis of Bookings
+## Analysis of Cancellations
+## Analysis of Repeated Guests
+## Analysis of Average Daily Rate
+## Analysis of Revenue
+# Modelling
+
+# Summary
+
+# References
+
+[1] N. Antonio, A. de Almeida and L. Nunes, [Hotel booking demand datasets](https://www.sciencedirect.com/science/article/pii/S2352340918315191), Volume 22, February 2019.\
+[2] T. Mock and A. Bichat. "Hotels." [rfordatascience / tidytuesday](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-02-11/readme.md)
+# 
